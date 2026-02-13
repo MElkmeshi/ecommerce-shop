@@ -22,12 +22,7 @@ export function CartPage() {
             <Button variant="ghost" size="icon" onClick={() => navigate('/')}>
               <ArrowLeft className="w-5 h-5" />
             </Button>
-            <div>
-              <h1 className="text-2xl font-bold">Shopping Cart</h1>
-              <p className="text-sm text-muted-foreground">
-                {totalItems} item{totalItems !== 1 ? 's' : ''}
-              </p>
-            </div>
+            <h1 className="text-2xl font-bold">Shopping Cart</h1>
           </div>
         </div>
       </div>
