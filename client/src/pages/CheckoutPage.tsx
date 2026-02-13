@@ -14,7 +14,9 @@ import { toast } from 'sonner';
 
 // Validation schema
 const checkoutSchema = z.object({
-  phoneNumber: z.string().min(1, 'Phone number is required'),
+  phoneNumber: z.string()
+    .min(10, 'Phone number must be at least 10 digits')
+    .regex(/^0\d{9,10}$/, 'Phone number must start with 0 and be 10-11 digits'),
   location: z.union([
     z.object({
       latitude: z.number(),
@@ -208,7 +210,7 @@ export function CheckoutPage() {
                     </label>
                     <Input
                       type="tel"
-                      placeholder="+1234567890"
+                      placeholder="0910441322"
                       {...register('phoneNumber')}
                     />
                     {errors.phoneNumber && (
