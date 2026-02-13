@@ -63,11 +63,11 @@ export function ProductsPage() {
         <Button
           size="lg"
           onClick={() => navigate('/cart')}
-          className="h-14 w-14 rounded-full shadow-lg relative"
+          className="h-14 w-14 rounded-full shadow-lg relative p-0 flex items-center justify-center"
         >
-          <ShoppingCart className="w-6 h-6" />
+          <ShoppingCart className="w-6 h-6 text-white" />
           {totalItems > 0 && (
-            <Badge className="absolute -top-1 -right-1 h-6 w-6 rounded-full p-0 flex items-center justify-center text-xs">
+            <Badge className="absolute -top-1 -right-1 h-6 w-6 rounded-full p-0 flex items-center justify-center text-xs pointer-events-none">
               {totalItems}
             </Badge>
           )}
@@ -95,7 +95,7 @@ export function ProductsPage() {
               >
                 <ShoppingCart className="w-5 h-5" />
                 {totalItems > 0 && (
-                  <Badge className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0 flex items-center justify-center">
+                  <Badge className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0 flex items-center justify-center pointer-events-none">
                     {totalItems}
                   </Badge>
                 )}
