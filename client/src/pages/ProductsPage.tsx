@@ -116,10 +116,12 @@ export function ProductsPage() {
           <Button
             variant="outline"
             onClick={() => setShowFilters(!showFilters)}
-            className="w-full flex items-center justify-center"
+            className="w-full flex items-center justify-center gap-2 text-foreground"
           >
-            <SlidersHorizontal className="w-4 h-4 mr-2" />
-            <span>{showFilters ? 'Hide Filters' : 'Show Filters'}</span>
+            <SlidersHorizontal className="w-4 h-4" />
+            <span className="text-sm font-medium">
+              {showFilters ? 'Hide Filters' : 'Show Filters'}
+            </span>
           </Button>
         </div>
 
