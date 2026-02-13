@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingCart } from 'lucide-react';
+import { ShoppingCart, SlidersHorizontal } from 'lucide-react';
 import { Product } from '@/types';
 import { getProducts } from '@/lib/api';
 import { ProductCard } from '@/components/ProductCard';
@@ -21,6 +21,7 @@ export function ProductsPage() {
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
   const [sortBy, setSortBy] = useState('newest');
+  const [showFilters, setShowFilters] = useState(false); // Collapsed by default
 
   // Get user info from Telegram
   const user = window.Telegram?.WebApp?.initDataUnsafe?.user;
@@ -56,9 +57,25 @@ export function ProductsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-20">
+      {/* Floating Cart Button (Mobile Only) */}
+      <div className="fixed bottom-6 right-6 z-50 lg:hidden">
+        <Button
+          size="lg"
+          onClick={() => navigate('/cart')}
+          className="h-14 w-14 rounded-full shadow-lg relative"
+        >
+          <ShoppingCart className="w-6 h-6" />
+          {totalItems > 0 && (
+            <Badge className="absolute -top-1 -right-1 h-6 w-6 rounded-full p-0 flex items-center justify-center text-xs">
+              {totalItems}
+            </Badge>
+          )}
+        </Button>
+      </div>
+
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-background border-b">
+      <div className="sticky top-0 z-40 bg-background border-b">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
@@ -69,19 +86,21 @@ export function ProductsPage() {
                 </p>
               )}
             </div>
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={() => navigate('/cart')}
-              className="relative"
-            >
-              <ShoppingCart className="w-5 h-5" />
-              {totalItems > 0 && (
-                <Badge className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0 flex items-center justify-center">
-                  {totalItems}
-                </Badge>
-              )}
-            </Button>
+            <div className="hidden lg:block relative">
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => navigate('/cart')}
+                className="relative"
+              >
+                <ShoppingCart className="w-5 h-5" />
+                {totalItems > 0 && (
+                  <Badge className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0 flex items-center justify-center">
+                    {totalItems}
+                  </Badge>
+                )}
+              </Button>
+            </div>
           </div>
 
           <div className="mt-4">
@@ -92,26 +111,40 @@ export function ProductsPage() {
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-6">
+        {/* Filter Toggle Button (Mobile) */}
+        <div className="mb-4 lg:hidden">
+          <Button
+            variant="outline"
+            onClick={() => setShowFilters(!showFilters)}
+            className="w-full"
+          >
+            <SlidersHorizontal className="w-4 h-4 mr-2" />
+            {showFilters ? 'Hide Filters' : 'Show Filters'}
+          </Button>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Filters Sidebar */}
-          <div className="lg:col-span-1">
-            <FilterPanel
-              selectedCategory={category}
-              minPrice={minPrice}
-              maxPrice={maxPrice}
-              sortBy={sortBy}
-              onCategoryChange={setCategory}
-              onPriceChange={(min, max) => {
-                setMinPrice(min);
-                setMaxPrice(max);
-              }}
-              onSortChange={setSortBy}
-              onReset={handleReset}
-            />
-          </div>
+          {(showFilters || window.innerWidth >= 1024) && (
+            <div className="lg:col-span-1">
+              <FilterPanel
+                selectedCategory={category}
+                minPrice={minPrice}
+                maxPrice={maxPrice}
+                sortBy={sortBy}
+                onCategoryChange={setCategory}
+                onPriceChange={(min, max) => {
+                  setMinPrice(min);
+                  setMaxPrice(max);
+                }}
+                onSortChange={setSortBy}
+                onReset={handleReset}
+              />
+            </div>
+          )}
 
           {/* Products Grid */}
-          <div className="lg:col-span-3">
+          <div className={showFilters ? 'lg:col-span-3' : 'lg:col-span-4'}>
             {loading ? (
               <div className="text-center py-12">
                 <p className="text-muted-foreground">Loading products...</p>
