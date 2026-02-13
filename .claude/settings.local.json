@@ -3,7 +3,24 @@
     "allow": [
       "Bash(xargs:*)",
       "WebSearch",
-      "Bash(php artisan route:list:*)"
+      "Bash(php artisan route:list:*)",
+      "Bash(composer require:*)",
+      "Bash(composer remove:*)",
+      "Bash(php artisan vendor:publish:*)",
+      "Bash(npm install:*)",
+      "Bash(npm view:*)",
+      "Bash(lsof:*)",
+      "Bash(php artisan migrate:fresh:*)",
+      "Bash(php artisan storage:link:*)",
+      "Bash(npm run build:*)",
+      "Bash(curl:*)",
+      "Bash(php artisan db:seed:*)",
+      "Bash(php artisan tinker:*)",
+      "Bash(ls:*)",
+      "Bash(php artisan make:command:*)",
+      "Bash(python3:*)",
+      "Bash(php artisan:*)",
+      "Bash(pkill:*)"
     ]
   }
 }

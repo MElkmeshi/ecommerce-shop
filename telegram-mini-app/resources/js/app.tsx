@@ -4,8 +4,18 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import '../css/app.css';
 import { initializeTheme } from './hooks/use-appearance';
+import { Toaster } from 'sonner';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+
+// Initialize Telegram WebApp
+if (typeof window !== 'undefined') {
+    const telegram = (window as any).Telegram;
+    if (telegram?.WebApp) {
+        telegram.WebApp.ready();
+        telegram.WebApp.expand();
+    }
+}
 
 createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
@@ -20,6 +30,7 @@ createInertiaApp({
         root.render(
             <StrictMode>
                 <App {...props} />
+                <Toaster position="top-center" richColors />
             </StrictMode>,
         );
     },
