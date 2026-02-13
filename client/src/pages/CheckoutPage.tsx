@@ -57,20 +57,11 @@ export function CheckoutPage() {
   const handleRequestLocation = async () => {
     setRequestingLocation(true);
 
-    // Debug info
-    const telegramAvailable = !!window.Telegram?.WebApp;
-    const locationAPIAvailable = !!window.Telegram?.WebApp?.requestLocation;
-    const browserGeoAvailable = !!navigator.geolocation;
-
     try {
       // Try to use Telegram's location API
       if (window.Telegram?.WebApp?.requestLocation) {
-        console.log('📍 Requesting location via Telegram WebApp...');
-        toast.info('📍 Using Telegram location API...', { duration: 2000 });
-
         window.Telegram.WebApp.requestLocation((location) => {
           if (location) {
-            console.log('✅ Location received:', location);
             setLocationData({
               latitude: location.latitude,
               longitude: location.longitude,
@@ -79,66 +70,43 @@ export function CheckoutPage() {
               latitude: location.latitude,
               longitude: location.longitude,
             });
-            toast.success(`✅ Location: ${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`);
+            toast.success('Location captured successfully');
           } else {
-            console.warn('⚠️ Location access denied by user');
-            toast.error('❌ Telegram: Location access denied. Please enter address manually.', { duration: 6000 });
+            toast.error('Location access denied');
           }
           setRequestingLocation(false);
         });
       } else {
-        // Show debug info
-        toast.warning(
-          `⚠️ Telegram location API not available.\n` +
-          `Telegram: ${telegramAvailable ? 'Yes' : 'No'}\n` +
-          `Location API: ${locationAPIAvailable ? 'Yes' : 'No'}\n` +
-          `Browser Geo: ${browserGeoAvailable ? 'Yes' : 'No'}`,
-          { duration: 5000 }
-        );
-
         // Fallback: Use browser geolocation API
-        console.log('📍 Telegram location API not available, using browser geolocation...');
         if (navigator.geolocation) {
-          toast.info('📍 Using browser geolocation...', { duration: 2000 });
-
           navigator.geolocation.getCurrentPosition(
             (position) => {
-              console.log('✅ Browser location received:', position.coords);
               const loc = {
                 latitude: position.coords.latitude,
                 longitude: position.coords.longitude,
               };
               setLocationData(loc);
               setValue('location', loc);
-              toast.success(`✅ Location: ${loc.latitude.toFixed(4)}, ${loc.longitude.toFixed(4)}`);
+              toast.success('Location captured successfully');
               setRequestingLocation(false);
             },
             (error) => {
-              console.error('❌ Geolocation error:', error);
-              let errorMsg = '❌ Geolocation failed:\n';
-
+              let errorMsg = 'Failed to get location. ';
               switch (error.code) {
                 case error.PERMISSION_DENIED:
-                  errorMsg += 'Code 1: Permission denied\n';
-                  console.error('Error code: PERMISSION_DENIED (1)');
+                  errorMsg += 'Permission denied.';
                   break;
                 case error.POSITION_UNAVAILABLE:
-                  errorMsg += 'Code 2: Position unavailable\n';
-                  console.error('Error code: POSITION_UNAVAILABLE (2)');
+                  errorMsg += 'Location unavailable.';
                   break;
                 case error.TIMEOUT:
-                  errorMsg += 'Code 3: Request timeout\n';
-                  console.error('Error code: TIMEOUT (3)');
+                  errorMsg += 'Request timeout.';
                   break;
                 default:
-                  errorMsg += `Code ${error.code}: Unknown error\n`;
-                  console.error('Error code:', error.code);
+                  errorMsg += 'Unknown error.';
               }
-
-              errorMsg += `Message: ${error.message}\n`;
-              errorMsg += 'Please enter address manually.';
-              console.error('Error message:', error.message);
-              toast.error(errorMsg, { duration: 8000 });
+              errorMsg += ' Please enter address manually.';
+              toast.error(errorMsg);
               setRequestingLocation(false);
             },
             {
@@ -148,26 +116,12 @@ export function CheckoutPage() {
             }
           );
         } else {
-          console.error('❌ Geolocation not supported by browser');
-          toast.error(
-            '❌ Geolocation not supported\n' +
-            'Your browser/app does not support location.\n' +
-            'Please enter address manually.',
-            { duration: 6000 }
-          );
+          toast.error('Geolocation not supported. Please enter address manually.');
           setRequestingLocation(false);
         }
       }
     } catch (error: any) {
-      console.error('❌ Location request exception:', error);
-      toast.error(
-        `❌ Exception occurred:\n` +
-        `Type: ${error.name || 'Unknown'}\n` +
-        `Message: ${error.message || 'No message'}\n` +
-        `Stack: ${error.stack?.substring(0, 100) || 'N/A'}\n` +
-        'Please enter address manually.',
-        { duration: 8000 }
-      );
+      toast.error('Failed to request location. Please enter address manually.');
       setRequestingLocation(false);
     }
   };
