@@ -18,7 +18,7 @@ export default function ProductsPage({ products, filters }: Props) {
   const addItem = useCartStore((state) => state.addItem);
   const removeItem = useCartStore((state) => state.removeItem);
   const updateQuantity = useCartStore((state) => state.updateQuantity);
-  const getTotalItems = useCartStore((state) => state.getTotalItems);
+  const totalItems = useCartStore((state) => state.getTotalItems());
   const cartItems = useCartStore((state) => state.items);
 
   const handleAddToCart = (product: Product) => {
@@ -38,7 +38,7 @@ export default function ProductsPage({ products, filters }: Props) {
         <h1 className="text-2xl font-bold">Products</h1>
         <Button variant="outline" size="sm" onClick={() => window.location.href = '/cart'}>
           <ShoppingCart className="mr-2 h-4 w-4" />
-          Cart ({getTotalItems()})
+          Cart ({totalItems})
         </Button>
       </div>
 
