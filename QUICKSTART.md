@@ -41,13 +41,11 @@ BOT_TOKEN=paste-your-bot-token-here
 ### 3. Set Up Database (30 seconds)
 
 ```bash
-# Still in server directory
-npm run db:generate
-npm run db:migrate
+npm run db:init
 npm run db:seed
 ```
 
-This creates sample products and an admin user.
+This creates tables, sample products, and an admin user.
 
 ### 4. Start Development Servers (1 minute)
 

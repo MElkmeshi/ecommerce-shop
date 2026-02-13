@@ -13,6 +13,13 @@ export default defineConfig({
   server: {
     port: 5173,
     host: true,
+    allowedHosts: [
+      'localhost',
+      '.ngrok-free.app',
+      '.ngrok.io',
+      'shop.hajat.com.ly',
+      '.hajat.com.ly',
+    ],
   },
   build: {
     outDir: 'dist',

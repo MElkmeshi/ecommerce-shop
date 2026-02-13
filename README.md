@@ -185,11 +185,8 @@ VITE_DEV_MODE=true
 ```bash
 cd ../server
 
-# Generate Drizzle migration files
-npm run db:generate
-
-# Run migrations
-npm run db:migrate
+# Create database tables
+npm run db:init
 
 # Seed database with sample data
 npm run db:seed
