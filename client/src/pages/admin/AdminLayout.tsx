@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Outlet, useNavigate, Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { LogOut, Package, ShoppingBag } from 'lucide-react';
+import { LogOut, Package, FolderOpen } from 'lucide-react';
 import { toast } from 'sonner';
 
 export function AdminLayout() {
@@ -64,6 +64,15 @@ export function AdminLayout() {
               >
                 <Package className="w-4 h-4 mr-2" />
                 Products
+              </Button>
+            </Link>
+            <Link to="/admin/categories">
+              <Button
+                variant={location.pathname === '/admin/categories' ? 'default' : 'ghost'}
+                className="rounded-none border-b-2 border-transparent"
+              >
+                <FolderOpen className="w-4 h-4 mr-2" />
+                Categories
               </Button>
             </Link>
           </nav>

@@ -339,3 +339,102 @@ export async function createCategory(req: Request, res: Response) {
     res.status(500).json({ error: 'Failed to create category' });
   }
 }
+
+/**
+ * Update category
+ * PUT /api/admin/categories/:id
+ */
+export async function updateCategory(req: Request, res: Response) {
+  try {
+    const categoryId = parseInt(req.params.id);
+
+    if (isNaN(categoryId)) {
+      return res.status(400).json({ error: 'Invalid category ID' });
+    }
+
+    const categoryData = createCategorySchema.parse(req.body);
+
+    // Verify category exists
+    const existing = await db
+      .select()
+      .from(categories)
+      .where(eq(categories.id, categoryId))
+      .limit(1);
+
+    if (existing.length === 0) {
+      return res.status(404).json({ error: 'Category not found' });
+    }
+
+    // Check if slug is taken by another category
+    const slugCheck = await db
+      .select()
+      .from(categories)
+      .where(eq(categories.slug, categoryData.slug))
+      .limit(1);
+
+    if (slugCheck.length > 0 && slugCheck[0].id !== categoryId) {
+      return res.status(400).json({ error: 'Category slug already exists' });
+    }
+
+    const updated = await db
+      .update(categories)
+      .set(categoryData)
+      .where(eq(categories.id, categoryId))
+      .returning();
+
+    res.json(updated[0]);
+  } catch (error) {
+    console.error('Error updating category:', error);
+
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: 'Invalid category data', details: error.errors });
+    }
+
+    res.status(500).json({ error: 'Failed to update category' });
+  }
+}
+
+/**
+ * Delete category
+ * DELETE /api/admin/categories/:id
+ */
+export async function deleteCategory(req: Request, res: Response) {
+  try {
+    const categoryId = parseInt(req.params.id);
+
+    if (isNaN(categoryId)) {
+      return res.status(400).json({ error: 'Invalid category ID' });
+    }
+
+    // Verify category exists
+    const existing = await db
+      .select()
+      .from(categories)
+      .where(eq(categories.id, categoryId))
+      .limit(1);
+
+    if (existing.length === 0) {
+      return res.status(404).json({ error: 'Category not found' });
+    }
+
+    // Check if category has products
+    const productsInCategory = await db
+      .select()
+      .from(products)
+      .where(eq(products.categoryId, categoryId))
+      .limit(1);
+
+    if (productsInCategory.length > 0) {
+      return res.status(400).json({
+        error: 'Cannot delete category with products. Please move or delete products first.'
+      });
+    }
+
+    await db.delete(categories).where(eq(categories.id, categoryId));
+
+    res.json({ success: true, message: 'Category deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting category:', error);
+    res.status(500).json({ error: 'Failed to delete category' });
+  }
+}

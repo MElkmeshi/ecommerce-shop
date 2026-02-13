@@ -7,6 +7,8 @@ import {
   deleteProduct,
   getAdminOrders,
   createCategory,
+  updateCategory,
+  deleteCategory,
 } from '../controllers/admin.controller';
 import { adminAuthMiddleware } from '../middleware/adminAuth';
 
@@ -24,5 +26,7 @@ router.delete('/admin/products/:id', adminAuthMiddleware, deleteProduct);
 router.get('/admin/orders', adminAuthMiddleware, getAdminOrders);
 
 router.post('/admin/categories', adminAuthMiddleware, createCategory);
+router.put('/admin/categories/:id', adminAuthMiddleware, updateCategory);
+router.delete('/admin/categories/:id', adminAuthMiddleware, deleteCategory);
 
 export default router;

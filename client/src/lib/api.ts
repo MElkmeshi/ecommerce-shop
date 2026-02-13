@@ -116,3 +116,13 @@ export const createCategory = async (categoryData: { name: string; slug: string 
   const response = await adminApi.post('/admin/categories', categoryData);
   return response.data;
 };
+
+export const updateCategory = async (id: number, categoryData: { name: string; slug: string }) => {
+  const response = await adminApi.put(`/admin/categories/${id}`, categoryData);
+  return response.data;
+};
+
+export const deleteCategory = async (id: number) => {
+  const response = await adminApi.delete(`/admin/categories/${id}`);
+  return response.data;
+};
