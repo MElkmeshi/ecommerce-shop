@@ -36,9 +36,9 @@ class OrderService
             $productIds = array_column($data['items'], 'productId');
             $products = Product::whereIn('id', $productIds)->get()->keyBy('id');
 
-            // Collect variant IDs if any
-            $variantIds = array_filter(array_column($data['items'], 'productVariantId'));
-            $variants = $variantIds ? ProductVariant::whereIn('id', $variantIds)->get()->keyBy('id') : collect();
+            // Collect variant IDs
+            $variantIds = array_column($data['items'], 'productVariantId');
+            $variants = ProductVariant::whereIn('id', $variantIds)->get()->keyBy('id');
 
             foreach ($data['items'] as $item) {
                 $product = $products->get($item['productId']);
@@ -47,38 +47,30 @@ class OrderService
                     throw new \Exception("Product {$item['productId']} not found");
                 }
 
-                // Check stock on variant if specified, otherwise on product
-                if (! empty($item['productVariantId'])) {
-                    $variant = $variants->get($item['productVariantId']);
+                // Variant is required
+                if (empty($item['productVariantId'])) {
+                    throw new \Exception("Product variant ID is required for product {$item['productId']}");
+                }
 
-                    if (! $variant) {
-                        throw new \Exception("Product variant {$item['productVariantId']} not found");
-                    }
+                $variant = $variants->get($item['productVariantId']);
 
-                    if (! $variant->isInStock($item['quantity'])) {
-                        throw new InsufficientStockException(
-                            "Insufficient stock for product variant: {$product->getTranslation('name', 'en')} ({$variant->display_name})"
-                        );
-                    }
-                } else {
-                    if (! $product->isInStock($item['quantity'])) {
-                        throw new InsufficientStockException(
-                            "Insufficient stock for product: {$product->getTranslation('name', 'en')}"
-                        );
-                    }
+                if (! $variant) {
+                    throw new \Exception("Product variant {$item['productVariantId']} not found");
+                }
+
+                if (! $variant->isInStock($item['quantity'])) {
+                    $variantDisplay = $variant->display_name ?: 'Default';
+                    throw new InsufficientStockException(
+                        "Insufficient stock for product variant: {$product->getTranslation('name', 'en')} ({$variantDisplay})"
+                    );
                 }
             }
 
             // Calculate total amount
             $totalAmount = 0;
             foreach ($data['items'] as $item) {
-                if (! empty($item['productVariantId'])) {
-                    $variant = $variants->get($item['productVariantId']);
-                    $totalAmount += $variant->price * $item['quantity'];
-                } else {
-                    $product = $products->get($item['productId']);
-                    $totalAmount += $product->price * $item['quantity'];
-                }
+                $variant = $variants->get($item['productVariantId']);
+                $totalAmount += $variant->price * $item['quantity'];
             }
 
             // Create order
@@ -93,30 +85,17 @@ class OrderService
             // Create order items and decrement stock
             foreach ($data['items'] as $item) {
                 $product = $products->get($item['productId']);
-
-                // Determine price and variant
-                if (! empty($item['productVariantId'])) {
-                    $variant = $variants->get($item['productVariantId']);
-                    $price = $variant->price;
-                    $variantId = $variant->id;
-                } else {
-                    $price = $product->price;
-                    $variantId = null;
-                }
+                $variant = $variants->get($item['productVariantId']);
 
                 $order->items()->create([
                     'product_id' => $product->id,
-                    'product_variant_id' => $variantId,
+                    'product_variant_id' => $variant->id,
                     'quantity' => $item['quantity'],
-                    'price' => $price, // Snapshot price
+                    'price' => $variant->price, // Snapshot price
                 ]);
 
-                // Decrement stock on variant or product
-                if ($variantId) {
-                    $variant->decrementStock($item['quantity']);
-                } else {
-                    $product->decrementStock($item['quantity']);
-                }
+                // Decrement stock on variant
+                $variant->decrementStock($item['quantity']);
             }
 
             // Dispatch webhook notification job (async, non-blocking)

@@ -61,9 +61,6 @@ export default function CartPage() {
                       <p className="text-sm text-muted-foreground">
                         {Number(item.price).toFixed(2)} LYD each
                       </p>
-                      {item.sku && (
-                        <p className="text-xs text-muted-foreground">SKU: {item.sku}</p>
-                      )}
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">

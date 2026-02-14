@@ -16,8 +16,7 @@ class ProductVariantService
     {
         return ProductVariant::where('product_id', $productId)
             ->with('variantValues.variantType')
-            ->orderBy('is_default', 'desc')
-            ->orderBy('created_at', 'asc')
+            ->orderBy('id', 'asc')
             ->get();
     }
 
@@ -29,18 +28,18 @@ class ProductVariantService
         return DB::transaction(function () use ($productId, $combinations) {
             $product = Product::findOrFail($productId);
 
-            // Mark product as having variants
-            $product->update(['has_variants' => true]);
+            // Delete existing "empty" default variant (one without variant values)
+            ProductVariant::where('product_id', $productId)
+                ->whereDoesntHave('variantValues')
+                ->delete();
 
             $variants = [];
 
             foreach ($combinations as $combination) {
                 $variant = ProductVariant::create([
                     'product_id' => $productId,
-                    'sku' => $combination['sku'] ?? null,
                     'price' => $combination['price'],
                     'stock' => $combination['stock'] ?? 0,
-                    'is_default' => $combination['is_default'] ?? false,
                 ]);
 
                 // Attach variant values
@@ -66,10 +65,8 @@ class ProductVariantService
         $variant = ProductVariant::findOrFail($variantId);
 
         $variant->update([
-            'sku' => $data['sku'] ?? $variant->sku,
             'price' => $data['price'] ?? $variant->price,
             'stock' => $data['stock'] ?? $variant->stock,
-            'is_default' => $data['is_default'] ?? $variant->is_default,
         ]);
 
         if (isset($data['variant_value_ids'])) {
@@ -88,14 +85,12 @@ class ProductVariantService
             $variant = ProductVariant::findOrFail($variantId);
             $product = $variant->product;
 
-            $result = $variant->delete();
-
-            // If no variants left, mark product as not having variants
-            if ($product->productVariants()->count() === 0) {
-                $product->update(['has_variants' => false]);
+            // Prevent deletion if this is the only variant
+            if ($product->productVariants()->count() === 1) {
+                throw new \Exception('Cannot delete the last variant. Every product must have at least one variant.');
             }
 
-            return $result;
+            return $variant->delete();
         });
     }
 
@@ -121,7 +116,7 @@ class ProductVariantService
     {
         return Product::with([
             'productVariants.variantValues.variantType',
-            'defaultVariant',
+            'primaryVariant',
         ])->find($productId);
     }
 }

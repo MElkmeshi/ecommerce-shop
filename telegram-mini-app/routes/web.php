@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\ProductVariantController as AdminProductVariantController;
+use App\Http\Controllers\Admin\StockManagementController as AdminStockManagementController;
 use App\Http\Controllers\Admin\VariantTypeController as AdminVariantTypeController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CategoryController;
@@ -51,6 +52,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/categories', [AdminCategoryController::class, 'index'])->name('categories.index');
         Route::get('/variant-types', [AdminVariantTypeController::class, 'index'])->name('variant-types.index');
         Route::get('/orders', [AdminOrderController::class, 'index'])->name('orders.index');
+        Route::get('/stock-management', [AdminStockManagementController::class, 'index'])->name('stock-management.index');
 
         // Product Management API
         Route::get('/api/products', [AdminProductController::class, 'apiIndex'])->name('api.products.index');
@@ -75,6 +77,11 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/api/products/{productId}/variants/generate', [AdminProductVariantController::class, 'generate'])->name('api.product-variants.generate');
         Route::put('/api/product-variants/{id}', [AdminProductVariantController::class, 'update'])->name('api.product-variants.update');
         Route::delete('/api/product-variants/{id}', [AdminProductVariantController::class, 'destroy'])->name('api.product-variants.destroy');
+
+        // Stock Management API
+        Route::get('/api/stock-management', [AdminStockManagementController::class, 'apiIndex'])->name('api.stock-management.index');
+        Route::post('/api/stock-management/bulk-update', [AdminStockManagementController::class, 'bulkUpdate'])->name('api.stock-management.bulk-update');
+        Route::patch('/api/stock-management/variants/{id}', [AdminStockManagementController::class, 'updateVariantStock'])->name('api.stock-management.update-variant');
 
         // Order Management API
         Route::get('/api/orders', [AdminOrderController::class, 'apiIndex'])->name('api.orders.index');

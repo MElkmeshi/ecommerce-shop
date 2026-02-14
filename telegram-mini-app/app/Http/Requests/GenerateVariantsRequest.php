@@ -27,8 +27,6 @@ class GenerateVariantsRequest extends FormRequest
             'combinations.*.variant_value_ids.*' => 'required|integer|exists:variant_values,id',
             'combinations.*.price' => 'required|numeric|min:0',
             'combinations.*.stock' => 'nullable|integer|min:0',
-            'combinations.*.sku' => 'nullable|string|max:255|unique:product_variants,sku',
-            'combinations.*.is_default' => 'nullable|boolean',
         ];
     }
 
@@ -45,7 +43,6 @@ class GenerateVariantsRequest extends FormRequest
             'combinations.*.variant_value_ids.*.exists' => 'Invalid variant value selected.',
             'combinations.*.price.required' => 'Price is required for each variant.',
             'combinations.*.price.min' => 'Price must be at least 0.',
-            'combinations.*.sku.unique' => 'This SKU is already in use.',
         ];
     }
 }

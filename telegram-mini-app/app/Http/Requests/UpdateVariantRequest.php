@@ -26,8 +26,6 @@ class UpdateVariantRequest extends FormRequest
         return [
             'price' => 'sometimes|required|numeric|min:0',
             'stock' => 'nullable|integer|min:0',
-            'sku' => "nullable|string|max:255|unique:product_variants,sku,{$variantId}",
-            'is_default' => 'nullable|boolean',
             'variant_value_ids' => 'nullable|array',
             'variant_value_ids.*' => 'required|integer|exists:variant_values,id',
         ];
@@ -43,7 +41,6 @@ class UpdateVariantRequest extends FormRequest
         return [
             'price.required' => 'Price is required.',
             'price.min' => 'Price must be at least 0.',
-            'sku.unique' => 'This SKU is already in use.',
             'variant_value_ids.*.exists' => 'Invalid variant value selected.',
         ];
     }

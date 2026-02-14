@@ -31,10 +31,8 @@ interface VariantValue {
 
 interface ProductVariant {
   id: number;
-  sku?: string;
   price: number;
   stock: number;
-  is_default: boolean;
   display_name: string;
   variant_values: VariantValue[];
 }
@@ -52,7 +50,7 @@ interface Product {
   description?: { en: string; ar: string };
   price: number;
   stock: number;
-  has_variants?: boolean;
+  variant_count?: number;
   category_id: number;
   category: {
     id: number;
@@ -86,7 +84,6 @@ function AdminProductsPage() {
   const [stock, setStock] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [image, setImage] = useState<File | null>(null);
-  const [hasVariants, setHasVariants] = useState(false);
 
   // Variant management state
   const [isVariantDialogOpen, setIsVariantDialogOpen] = useState(false);
@@ -98,8 +95,6 @@ function AdminProductsPage() {
       variant_value_ids: number[];
       price: string;
       stock: string;
-      sku: string;
-      is_default: boolean;
     }>
   >([]);
 
@@ -156,7 +151,6 @@ function AdminProductsPage() {
     formData.append('price', price);
     formData.append('stock', stock);
     formData.append('categoryId', categoryId);
-    formData.append('hasVariants', hasVariants ? '1' : '0');
     if (image) formData.append('image', image);
 
     try {
@@ -184,7 +178,6 @@ function AdminProductsPage() {
     formData.append('price', price);
     formData.append('stock', stock);
     formData.append('categoryId', categoryId);
-    formData.append('hasVariants', hasVariants ? '1' : '0');
     if (image) formData.append('image', image);
     formData.append('_method', 'PUT');
 
@@ -231,7 +224,6 @@ function AdminProductsPage() {
     setPrice(product.price.toString());
     setStock(product.stock.toString());
     setCategoryId(product.category_id.toString());
-    setHasVariants(product.has_variants || false);
     setIsEditOpen(true);
   };
 
@@ -244,16 +236,13 @@ function AdminProductsPage() {
     setStock('');
     setCategoryId('');
     setImage(null);
-    setHasVariants(false);
     setCurrentProduct(null);
   };
 
   const openVariantDialog = async (product: Product) => {
     setCurrentProduct(product);
     await fetchVariantTypes();
-    if (product.has_variants) {
-      await fetchProductVariants(product.id);
-    }
+    await fetchProductVariants(product.id);
     setIsVariantDialogOpen(true);
   };
 
@@ -279,12 +268,10 @@ function AdminProductsPage() {
     }
 
     setVariantCombinations(
-      combinations.map((combo, index) => ({
+      combinations.map((combo) => ({
         variant_value_ids: combo,
         price: currentProduct?.price.toString() || '',
         stock: '0',
-        sku: '',
-        is_default: index === 0,
       }))
     );
   };
@@ -307,8 +294,6 @@ function AdminProductsPage() {
           variant_value_ids: c.variant_value_ids,
           price: parseFloat(c.price),
           stock: parseInt(c.stock),
-          sku: c.sku || null,
-          is_default: c.is_default,
         })),
       });
 
@@ -421,11 +406,9 @@ function AdminProductsPage() {
                           </Badge>
                         </td>
                         <td className="py-3">
-                          {product.has_variants ? (
-                            <Badge variant="secondary">Yes</Badge>
-                          ) : (
-                            <Badge variant="outline">No</Badge>
-                          )}
+                          <Badge variant="secondary">
+                            {product.variant_count || 0} variant{product.variant_count !== 1 ? 's' : ''}
+                          </Badge>
                         </td>
                         <td className="py-3">
                           <div className="flex gap-2">
@@ -471,16 +454,6 @@ function AdminProductsPage() {
                 <DialogDescription>Add a new product to your store</DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="hasVariants"
-                    checked={hasVariants}
-                    onCheckedChange={(checked) => setHasVariants(checked as boolean)}
-                  />
-                  <Label htmlFor="hasVariants" className="cursor-pointer">
-                    This product has variants (e.g., Size, Color)
-                  </Label>
-                </div>
                 <div className="grid gap-2">
                   <Label htmlFor="nameEn">Name (English)</Label>
                   <Input
@@ -592,16 +565,6 @@ function AdminProductsPage() {
                 <DialogDescription>Update product information</DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="editHasVariants"
-                    checked={hasVariants}
-                    onCheckedChange={(checked) => setHasVariants(checked as boolean)}
-                  />
-                  <Label htmlFor="editHasVariants" className="cursor-pointer">
-                    This product has variants (e.g., Size, Color)
-                  </Label>
-                </div>
                 <div className="grid gap-2">
                   <Label htmlFor="editNameEn">Name (English)</Label>
                   <Input
@@ -716,28 +679,20 @@ function AdminProductsPage() {
                       <thead>
                         <tr className="border-b bg-muted/50">
                           <th className="p-2 text-left text-sm font-semibold">Variant</th>
-                          <th className="p-2 text-left text-sm font-semibold">SKU</th>
                           <th className="p-2 text-left text-sm font-semibold">Price</th>
                           <th className="p-2 text-left text-sm font-semibold">Stock</th>
-                          <th className="p-2 text-left text-sm font-semibold">Default</th>
                           <th className="p-2 text-left text-sm font-semibold">Actions</th>
                         </tr>
                       </thead>
                       <tbody>
                         {productVariants.map((variant) => (
                           <tr key={variant.id} className="border-b">
-                            <td className="p-2">{variant.display_name}</td>
-                            <td className="p-2">
-                              <Badge variant="outline">{variant.sku || 'N/A'}</Badge>
-                            </td>
+                            <td className="p-2">{variant.display_name || 'Default'}</td>
                             <td className="p-2">{variant.price} LYD</td>
                             <td className="p-2">
                               <Badge variant={variant.stock > 0 ? 'default' : 'destructive'}>
                                 {variant.stock}
                               </Badge>
-                            </td>
-                            <td className="p-2">
-                              {variant.is_default && <Badge>Default</Badge>}
                             </td>
                             <td className="p-2">
                               <Button
@@ -809,8 +764,6 @@ function AdminProductsPage() {
                             <th className="p-2 text-left text-sm font-semibold">Variant</th>
                             <th className="p-2 text-left text-sm font-semibold">Price</th>
                             <th className="p-2 text-left text-sm font-semibold">Stock</th>
-                            <th className="p-2 text-left text-sm font-semibold">SKU</th>
-                            <th className="p-2 text-left text-sm font-semibold">Default</th>
                             <th className="p-2 text-left text-sm font-semibold">Actions</th>
                           </tr>
                         </thead>
@@ -843,31 +796,6 @@ function AdminProductsPage() {
                                     setVariantCombinations(newCombos);
                                   }}
                                   className="h-8 w-20"
-                                />
-                              </td>
-                              <td className="p-2">
-                                <Input
-                                  type="text"
-                                  value={combo.sku}
-                                  onChange={(e) => {
-                                    const newCombos = [...variantCombinations];
-                                    newCombos[index].sku = e.target.value;
-                                    setVariantCombinations(newCombos);
-                                  }}
-                                  className="h-8 w-28"
-                                  placeholder="Optional"
-                                />
-                              </td>
-                              <td className="p-2">
-                                <Checkbox
-                                  checked={combo.is_default}
-                                  onCheckedChange={(checked) => {
-                                    const newCombos = variantCombinations.map((c, i) => ({
-                                      ...c,
-                                      is_default: i === index ? (checked as boolean) : false,
-                                    }));
-                                    setVariantCombinations(newCombos);
-                                  }}
                                 />
                               </td>
                               <td className="p-2">

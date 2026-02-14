@@ -6,9 +6,16 @@
       "Bash(php artisan migrate:*)",
       "Bash(php artisan make:request:*)",
       "Bash(php artisan:*)",
-      "Bash(vendor/bin/pint:*)"
+      "Bash(vendor/bin/pint:*)",
+      "Bash(npm run build:*)",
+      "Bash(ls:*)"
     ]
   },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "laravel-boost",
+    "herd"
+  ],
   "disabledMcpjsonServers": [
     "laravel-boost",
     "herd"

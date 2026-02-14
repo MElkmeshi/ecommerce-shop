@@ -35,9 +35,6 @@ class ProductController extends Controller
                     'id' => $product->id,
                     'name' => $product->name,
                     'description' => $product->description,
-                    'price' => $product->price,
-                    'stock' => $product->stock,
-                    'has_variants' => $product->has_variants,
                     'image_url' => $product->image_url,
                     'thumb_url' => $product->thumb_url,
                     'category' => [
@@ -45,6 +42,31 @@ class ProductController extends Controller
                         'name' => $product->category->name,
                         'slug' => $product->category->slug,
                     ],
+                    'product_variants' => $product->productVariants->map(function ($variant) {
+                        return [
+                            'id' => $variant->id,
+                            'price' => $variant->price,
+                            'stock' => $variant->stock,
+                            'display_name' => $variant->display_name,
+                            'variant_values' => $variant->variantValues->map(function ($value) {
+                                return [
+                                    'id' => $value->id,
+                                    'value' => [
+                                        'en' => $value->getTranslation('value', 'en'),
+                                        'ar' => $value->getTranslation('value', 'ar'),
+                                    ],
+                                    'variant_type' => [
+                                        'id' => $value->variantType->id,
+                                        'name' => [
+                                            'en' => $value->variantType->getTranslation('name', 'en'),
+                                            'ar' => $value->variantType->getTranslation('name', 'ar'),
+                                        ],
+                                        'slug' => $value->variantType->slug,
+                                    ],
+                                ];
+                            }),
+                        ];
+                    }),
                 ];
             }),
             'variantTypes' => $variantTypes,
@@ -57,15 +79,15 @@ class ProductController extends Controller
      */
     public function show(Product $product): Response
     {
-        $product->load('category');
+        $product->load(['category', 'primaryVariant']);
 
         return Inertia::render('ProductDetailPage', [
             'product' => [
                 'id' => $product->id,
                 'name' => $product->name,
                 'description' => $product->description,
-                'price' => $product->price,
-                'stock' => $product->stock,
+                'price' => $product->primaryVariant?->price ?? 0,
+                'stock' => $product->primaryVariant?->stock ?? 0,
                 'image_url' => $product->image_url,
                 'preview_url' => $product->preview_url,
                 'category' => [
@@ -89,22 +111,25 @@ class ProductController extends Controller
         }
 
         return response()->json([
-            'has_variants' => $product->has_variants,
             'variants' => $product->productVariants->map(function ($variant) {
                 return [
                     'id' => $variant->id,
-                    'sku' => $variant->sku,
                     'price' => $variant->price,
                     'stock' => $variant->stock,
-                    'is_default' => $variant->is_default,
                     'display_name' => $variant->display_name,
                     'variant_values' => $variant->variantValues->map(function ($value) {
                         return [
                             'id' => $value->id,
-                            'value' => $value->value,
+                            'value' => [
+                                'en' => $value->getTranslation('value', 'en'),
+                                'ar' => $value->getTranslation('value', 'ar'),
+                            ],
                             'variant_type' => [
                                 'id' => $value->variantType->id,
-                                'name' => $value->variantType->name,
+                                'name' => [
+                                    'en' => $value->variantType->getTranslation('name', 'en'),
+                                    'ar' => $value->variantType->getTranslation('name', 'ar'),
+                                ],
                                 'slug' => $value->variantType->slug,
                             ],
                         ];

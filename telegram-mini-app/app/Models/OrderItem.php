@@ -75,9 +75,11 @@ class OrderItem extends Model
     {
         $productName = $this->product->getTranslation('name', $locale);
 
-        if ($this->product_variant_id && $this->relationLoaded('productVariant') && $this->productVariant) {
+        if ($this->relationLoaded('productVariant') && $this->productVariant) {
             $variantDisplay = $this->productVariant->display_name;
-            $productName .= " ({$variantDisplay})";
+            if (! empty($variantDisplay)) {
+                $productName .= " ({$variantDisplay})";
+            }
         }
 
         return $productName;

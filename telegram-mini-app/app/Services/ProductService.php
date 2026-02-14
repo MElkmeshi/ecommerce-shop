@@ -12,7 +12,7 @@ class ProductService
      */
     public function getProducts(array $filters): Collection
     {
-        $query = Product::with(['category', 'productVariants.variantValues']);
+        $query = Product::with(['category', 'productVariants.variantValues.variantType']);
 
         // Search by name (check both English and Arabic)
         if (! empty($filters['search'])) {
@@ -32,20 +32,28 @@ class ProductService
 
         // Filter by variant values
         if (! empty($filters['variantValues']) && is_array($filters['variantValues'])) {
-            $query->where('has_variants', true)
-                ->whereHas('productVariants.variantValues', function ($q) use ($filters) {
-                    $q->whereIn('variant_value_id', $filters['variantValues']);
-                });
+            $query->whereHas('productVariants.variantValues', function ($q) use ($filters) {
+                $q->whereIn('variant_value_id', $filters['variantValues']);
+            });
         }
 
-        // Filter by price range
+        // Filter by price range (check variant prices)
         if (isset($filters['minPrice'])) {
-            $query->where('price', '>=', $filters['minPrice']);
+            $query->whereHas('productVariants', function ($q) use ($filters) {
+                $q->where('price', '>=', $filters['minPrice']);
+            });
         }
 
         if (isset($filters['maxPrice'])) {
-            $query->where('price', '<=', $filters['maxPrice']);
+            $query->whereHas('productVariants', function ($q) use ($filters) {
+                $q->where('price', '<=', $filters['maxPrice']);
+            });
         }
+
+        // Hide products with 0 stock (all products have variants now)
+        $query->whereHas('productVariants', function ($q) {
+            $q->where('stock', '>', 0);
+        });
 
         // Sorting
         $sort = $filters['sort'] ?? 'newest';
@@ -54,10 +62,24 @@ class ProductService
                 $query->orderByRaw('JSON_UNQUOTE(JSON_EXTRACT(name, "$.en")) ASC');
                 break;
             case 'price-asc':
-                $query->orderBy('price', 'asc');
+                // Sort by primary variant price (lowest ID variant)
+                $query->orderBy(
+                    \App\Models\ProductVariant::select('price')
+                        ->whereColumn('product_id', 'products.id')
+                        ->orderBy('id')
+                        ->limit(1),
+                    'asc'
+                );
                 break;
             case 'price-desc':
-                $query->orderBy('price', 'desc');
+                // Sort by primary variant price (lowest ID variant)
+                $query->orderBy(
+                    \App\Models\ProductVariant::select('price')
+                        ->whereColumn('product_id', 'products.id')
+                        ->orderBy('id')
+                        ->limit(1),
+                    'desc'
+                );
                 break;
             case 'newest':
             default:
@@ -84,7 +106,7 @@ class ProductService
         return Product::with([
             'category',
             'productVariants.variantValues.variantType',
-            'defaultVariant',
+            'primaryVariant',
         ])->find($id);
     }
 }

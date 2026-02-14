@@ -15,10 +15,8 @@ export interface VariantValue {
 export interface ProductVariant {
   id: number;
   product_id: number;
-  sku?: string;
   price: number;
   stock: number;
-  is_default: boolean;
   display_name: string;
   variant_values: VariantValue[];
 }
@@ -27,12 +25,12 @@ export interface Product {
   id: number;
   name: string;
   description?: string;
-  price: number;
+  price?: number; // Display price from primary variant
   image_url?: string;
   thumb_url?: string;
   preview_url?: string;
-  stock: number;
-  has_variants?: boolean;
+  stock?: number; // Display stock from primary variant
+  variant_count?: number; // Number of variants
   product_variants?: ProductVariant[];
   category: {
     id: number;

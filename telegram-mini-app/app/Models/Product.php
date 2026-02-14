@@ -31,10 +31,7 @@ class Product extends Model implements HasMedia
     protected $fillable = [
         'name',
         'description',
-        'price',
-        'stock',
         'category_id',
-        'has_variants',
     ];
 
     /**
@@ -44,11 +41,7 @@ class Product extends Model implements HasMedia
      */
     protected function casts(): array
     {
-        return [
-            'price' => 'decimal:2',
-            'stock' => 'integer',
-            'has_variants' => 'boolean',
-        ];
+        return [];
     }
 
     /**
@@ -96,27 +89,11 @@ class Product extends Model implements HasMedia
     }
 
     /**
-     * Get the default product variant.
+     * Get the primary product variant (oldest/first variant).
      */
-    public function defaultVariant(): HasOne
+    public function primaryVariant(): HasOne
     {
-        return $this->hasOne(ProductVariant::class)->where('is_default', true);
-    }
-
-    /**
-     * Decrement the product stock.
-     */
-    public function decrementStock(int $quantity): void
-    {
-        $this->decrement('stock', $quantity);
-    }
-
-    /**
-     * Check if the product is in stock.
-     */
-    public function isInStock(int $quantity = 1): bool
-    {
-        return $this->stock >= $quantity;
+        return $this->hasOne(ProductVariant::class)->oldestOfMany();
     }
 
     /**
@@ -144,26 +121,25 @@ class Product extends Model implements HasMedia
     }
 
     /**
-     * Get the effective price (from default variant if has variants, otherwise base price).
+     * Get the display price from the primary variant.
      */
-    public function getEffectivePriceAttribute(): float
+    public function getDisplayPriceAttribute(): float
     {
-        if ($this->has_variants && $this->relationLoaded('defaultVariant') && $this->defaultVariant) {
-            return (float) $this->defaultVariant->price;
-        }
-
-        return (float) $this->price;
+        return (float) ($this->primaryVariant?->price ?? 0);
     }
 
     /**
-     * Get the effective stock (from default variant if has variants, otherwise base stock).
+     * Boot the model.
      */
-    public function getEffectiveStockAttribute(): int
+    protected static function booted(): void
     {
-        if ($this->has_variants && $this->relationLoaded('defaultVariant') && $this->defaultVariant) {
-            return $this->defaultVariant->stock;
-        }
-
-        return $this->stock;
+        static::created(function (Product $product) {
+            if ($product->productVariants()->count() === 0) {
+                $product->productVariants()->create([
+                    'price' => 0,
+                    'stock' => 0,
+                ]);
+            }
+        });
     }
 }

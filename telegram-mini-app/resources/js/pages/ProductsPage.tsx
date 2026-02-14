@@ -44,10 +44,13 @@ export default function ProductsPage({ products, variantTypes, filters }: Props)
   };
 
   const getSelectedVariant = (product: Product): ProductVariant | null => {
-    if (!product.has_variants || !product.product_variants) return null;
+    if (!product.product_variants || product.product_variants.length === 0) return null;
 
     const selectedForProduct = selectedVariants[product.id];
-    if (!selectedForProduct) return null;
+    if (!selectedForProduct) {
+      // Return first variant as default if none selected
+      return product.product_variants[0];
+    }
 
     const selectedValueIds = Object.values(selectedForProduct);
 
@@ -57,24 +60,23 @@ export default function ProductsPage({ products, variantTypes, filters }: Props)
         selectedValueIds.length === variantValueIds.length &&
         selectedValueIds.every((id) => variantValueIds.includes(id))
       );
-    }) || null;
+    }) || product.product_variants[0];
   };
 
-  const handleAddToCart = (product: Product, variant?: ProductVariant) => {
-    if (product.has_variants && !variant) {
-      toast.error('Please select all variant options');
+  const handleAddToCart = (product: Product, variant: ProductVariant) => {
+    if (!variant) {
+      toast.error('Please select a variant');
       return;
     }
 
     addItem({
       productId: product.id,
-      productVariantId: variant?.id,
+      productVariantId: variant.id,
       name: product.name,
-      variantDisplay: variant?.display_name,
-      price: variant?.price || product.price,
+      variantDisplay: variant.display_name,
+      price: variant.price,
       imageUrl: product.thumb_url,
-      stock: variant?.stock || product.stock,
-      sku: variant?.sku,
+      stock: variant.stock,
     });
 
     toast.success('Added to cart!');
@@ -179,7 +181,7 @@ export default function ProductsPage({ products, variantTypes, filters }: Props)
                 </p>
 
                 {/* Variant Selection */}
-                {product.has_variants && product.product_variants && (
+                {product.product_variants && product.product_variants.length > 0 && (
                   <div className="space-y-2">
                     {/* Get unique variant types for this product */}
                     {(() => {
@@ -249,8 +251,8 @@ export default function ProductsPage({ products, variantTypes, filters }: Props)
                   </div>
                 ) : (
                   <Button
-                    onClick={() => handleAddToCart(product, selectedVariant || undefined)}
-                    disabled={displayStock === 0}
+                    onClick={() => selectedVariant && handleAddToCart(product, selectedVariant)}
+                    disabled={displayStock === 0 || !selectedVariant}
                     size="sm"
                   >
                     <ShoppingCart className="mr-2 h-4 w-4" />

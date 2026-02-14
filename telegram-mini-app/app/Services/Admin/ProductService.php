@@ -4,6 +4,7 @@ namespace App\Services\Admin;
 
 use App\Models\Product;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
 
 class ProductService
 {
@@ -12,7 +13,7 @@ class ProductService
      */
     public function getAllProducts(): Collection
     {
-        return Product::with('category')->orderBy('created_at', 'desc')->get();
+        return Product::with(['category', 'primaryVariant', 'productVariants'])->orderBy('created_at', 'desc')->get();
     }
 
     /**
@@ -20,21 +21,26 @@ class ProductService
      */
     public function createProduct(array $data): Product
     {
-        $product = Product::create([
-            'name' => $data['name'],
-            'description' => $data['description'] ?? null,
-            'price' => $data['price'],
-            'stock' => $data['stock'],
-            'category_id' => $data['categoryId'],
-            'has_variants' => $data['hasVariants'] ?? false,
-        ]);
+        return DB::transaction(function () use ($data) {
+            $product = Product::create([
+                'name' => $data['name'],
+                'description' => $data['description'] ?? null,
+                'category_id' => $data['categoryId'],
+            ]);
 
-        // Handle image upload if present
-        if (isset($data['image'])) {
-            $product->addMedia($data['image'])->toMediaCollection('product_images');
-        }
+            // Create initial variant with provided price/stock
+            $product->productVariants()->create([
+                'price' => $data['price'] ?? 0,
+                'stock' => $data['stock'] ?? 0,
+            ]);
 
-        return $product->load('category');
+            // Handle image upload if present
+            if (isset($data['image'])) {
+                $product->addMedia($data['image'])->toMediaCollection('product_images');
+            }
+
+            return $product->load(['category', 'primaryVariant']);
+        });
     }
 
     /**
@@ -42,48 +48,57 @@ class ProductService
      */
     public function updateProduct(int $id, array $data): ?Product
     {
-        $product = Product::find($id);
+        $product = Product::with('primaryVariant')->find($id);
 
         if (! $product) {
             return null;
         }
 
-        // Build update data
-        $updateData = [];
+        return DB::transaction(function () use ($product, $data) {
+            // Build product update data
+            $productUpdateData = [];
 
-        if (isset($data['name'])) {
-            $updateData['name'] = $data['name'];
-        }
+            if (isset($data['name'])) {
+                $productUpdateData['name'] = $data['name'];
+            }
 
-        if (isset($data['description'])) {
-            $updateData['description'] = $data['description'];
-        }
+            if (isset($data['description'])) {
+                $productUpdateData['description'] = $data['description'];
+            }
 
-        if (isset($data['price'])) {
-            $updateData['price'] = $data['price'];
-        }
+            if (isset($data['categoryId'])) {
+                $productUpdateData['category_id'] = $data['categoryId'];
+            }
 
-        if (isset($data['stock'])) {
-            $updateData['stock'] = $data['stock'];
-        }
+            if (! empty($productUpdateData)) {
+                $product->update($productUpdateData);
+            }
 
-        if (isset($data['categoryId'])) {
-            $updateData['category_id'] = $data['categoryId'];
-        }
+            // Update primary variant if price or stock provided
+            if (isset($data['price']) || isset($data['stock'])) {
+                $variantUpdateData = [];
 
-        if (isset($data['hasVariants'])) {
-            $updateData['has_variants'] = $data['hasVariants'];
-        }
+                if (isset($data['price'])) {
+                    $variantUpdateData['price'] = $data['price'];
+                }
 
-        $product->update($updateData);
+                if (isset($data['stock'])) {
+                    $variantUpdateData['stock'] = $data['stock'];
+                }
 
-        // Handle image upload if present (replaces existing)
-        if (isset($data['image'])) {
-            $product->clearMediaCollection('product_images');
-            $product->addMedia($data['image'])->toMediaCollection('product_images');
-        }
+                if ($product->primaryVariant && ! empty($variantUpdateData)) {
+                    $product->primaryVariant->update($variantUpdateData);
+                }
+            }
 
-        return $product->load('category');
+            // Handle image upload if present (replaces existing)
+            if (isset($data['image'])) {
+                $product->clearMediaCollection('product_images');
+                $product->addMedia($data['image'])->toMediaCollection('product_images');
+            }
+
+            return $product->load(['category', 'primaryVariant']);
+        });
     }
 
     /**

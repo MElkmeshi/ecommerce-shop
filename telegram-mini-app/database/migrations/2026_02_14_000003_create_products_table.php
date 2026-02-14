@@ -15,8 +15,6 @@ return new class extends Migration
             $table->id();
             $table->json('name'); // Translatable: {"en": "Laptop", "ar": "حاسوب محمول"}
             $table->json('description')->nullable(); // Translatable descriptions
-            $table->decimal('price', 10, 2); // Product price
-            $table->integer('stock')->default(0); // Available quantity
             $table->foreignId('category_id')->constrained('categories')->restrictOnDelete();
             $table->timestamps();
         });

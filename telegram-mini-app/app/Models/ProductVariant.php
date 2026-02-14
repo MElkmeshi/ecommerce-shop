@@ -19,11 +19,16 @@ class ProductVariant extends Model
      */
     protected $fillable = [
         'product_id',
-        'sku',
         'price',
         'stock',
-        'is_default',
     ];
+
+    /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array
+     */
+    protected $appends = ['display_name'];
 
     /**
      * Get the attributes that should be cast.
@@ -35,7 +40,6 @@ class ProductVariant extends Model
         return [
             'price' => 'decimal:2',
             'stock' => 'integer',
-            'is_default' => 'boolean',
         ];
     }
 
