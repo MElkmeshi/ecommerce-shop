@@ -95,7 +95,11 @@ class OrderController extends Controller
                 return [
                     'id' => $order->id,
                     'total_amount' => $order->total_amount,
+                    'delivery_fee' => $order->delivery_fee,
+                    'delivery_distance' => $order->delivery_distance,
                     'status' => $order->status,
+                    'payment_method' => $order->payment_method,
+                    'payment_status' => $order->payment_status,
                     'phone_number' => $order->phone_number,
                     'location' => $order->location,
                     'created_at' => $order->created_at->format('Y-m-d H:i:s'),

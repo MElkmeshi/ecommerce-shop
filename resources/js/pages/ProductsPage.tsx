@@ -76,23 +76,29 @@ export default function ProductsPage({
         if (!product.product_variants || product.product_variants.length === 0)
             return null;
 
-        const selectedForProduct = selectedVariants[product.id];
-        if (!selectedForProduct) {
-            // Return first variant as default if none selected
+        // If there's only one variant, auto-select it
+        if (product.product_variants.length === 1) {
             return product.product_variants[0];
+        }
+
+        const selectedForProduct = selectedVariants[product.id];
+        if (!selectedForProduct || Object.keys(selectedForProduct).length === 0) {
+            // No selections made and multiple variants - require user to select
+            return null;
         }
 
         const selectedValueIds = Object.values(selectedForProduct);
 
-        return (
-            product.product_variants.find((variant) => {
-                const variantValueIds = variant.variant_values.map((v) => v.id);
-                return (
-                    selectedValueIds.length === variantValueIds.length &&
-                    selectedValueIds.every((id) => variantValueIds.includes(id))
-                );
-            }) || product.product_variants[0]
-        );
+        // Find variant that matches ALL selected values
+        const matchedVariant = product.product_variants.find((variant) => {
+            const variantValueIds = variant.variant_values.map((v) => v.id);
+            return (
+                selectedValueIds.length === variantValueIds.length &&
+                selectedValueIds.every((id) => variantValueIds.includes(id))
+            );
+        });
+
+        return matchedVariant || null;
     };
 
     const handleAddToCart = (product: Product, variant: ProductVariant) => {
@@ -365,19 +371,20 @@ export default function ProductsPage({
                     {filteredProducts.map((product) => {
                         const selectedVariant = getSelectedVariant(product);
                         const currentSelections = selectedVariants[product.id];
+                        const hasVariants = product.product_variants && product.product_variants.length > 0;
 
-                        // If user has made selections, show selected variant's stock
-                        // Otherwise, show sum of all variants' stock
-                        const displayStock =
-                            currentSelections &&
-                            Object.keys(currentSelections).length > 0
-                                ? (selectedVariant?.stock ?? 0)
-                                : (product.product_variants?.reduce(
-                                      (sum, v) => sum + (v.stock || 0),
-                                      0,
-                                  ) ?? 0);
+                        // If variant is selected, show its stock and price
+                        // Otherwise, show total stock and lowest price
+                        const displayStock = selectedVariant
+                            ? selectedVariant.stock
+                            : (product.product_variants?.reduce(
+                                  (sum, v) => sum + (v.stock || 0),
+                                  0,
+                              ) ?? 0);
 
-                        const displayPrice = selectedVariant?.price || 0;
+                        const displayPrice = selectedVariant
+                            ? selectedVariant.price
+                            : (Math.min(...(product.product_variants?.map(v => v.price) || [0])));
                         const cartItem = cartItems.find(
                             (item) =>
                                 item.productId === product.id &&
@@ -465,7 +472,7 @@ export default function ProductsPage({
                                                     ).map((type) => {
                                                         // Filter variants based on selections from OTHER variant types
                                                         let availableVariants =
-                                                            product.product_variants;
+                                                            product.product_variants || [];
 
                                                         Object.entries(
                                                             currentSelections,
@@ -589,6 +596,7 @@ export default function ProductsPage({
                                 </CardContent>
                                 <CardFooter className="flex items-center justify-between">
                                     <span className="text-xl font-bold">
+                                        {!selectedVariant && hasVariants && 'from '}
                                         {displayPrice} LYD
                                     </span>
                                     {cartItem ? (
@@ -645,7 +653,9 @@ export default function ProductsPage({
                                             size="sm"
                                         >
                                             <ShoppingCart className="mr-2 h-4 w-4" />
-                                            Add to Cart
+                                            {!selectedVariant && hasVariants
+                                                ? 'Select Options'
+                                                : 'Add to Cart'}
                                         </Button>
                                     )}
                                 </CardFooter>

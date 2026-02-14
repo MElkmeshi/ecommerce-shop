@@ -48,7 +48,11 @@ export interface Category {
 export interface Order {
   id: number;
   total_amount: number;
+  delivery_fee: number;
+  delivery_distance: number | null;
   status: 'pending' | 'processing' | 'completed' | 'cancelled';
+  payment_method: 'cash' | 'credit_card';
+  payment_status: 'pending' | 'paid' | 'failed' | 'cancelled';
   phone_number: string;
   location: any;
   created_at: string;

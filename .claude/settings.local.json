@@ -12,7 +12,8 @@
       "Bash(composer require:*)",
       "Bash(npm install:*)",
       "Bash(git diff:*)",
-      "Bash(sqlite3:*)"
+      "Bash(sqlite3:*)",
+      "Bash(git add:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

@@ -24,9 +24,10 @@ class CreateOrderRequest extends FormRequest
         return [
             'phoneNumber' => ['required', 'string', 'regex:/^0\d{9,10}$/'],
             'location' => 'required|array',
-            'location.latitude' => 'required_without:location.address|numeric',
-            'location.longitude' => 'required_without:location.address|numeric',
-            'location.address' => 'required_without:location.latitude|string',
+            'location.latitude' => 'nullable|required_without:location.plusCode|numeric',
+            'location.longitude' => 'nullable|required_without:location.plusCode|numeric',
+            'location.plusCode' => 'nullable|required_without_all:location.latitude,location.longitude|string',
+            'location.address' => 'nullable|string',
             'paymentMethod' => 'required|string|in:cash,credit_card',
             'items' => 'required|array|min:1',
             'items.*.productId' => 'required|integer|exists:products,id',
@@ -46,6 +47,9 @@ class CreateOrderRequest extends FormRequest
             'phoneNumber.regex' => 'Phone number must start with 0 and be 10-11 digits long.',
             'items.required' => 'At least one item is required in the order.',
             'items.*.productId.exists' => 'One or more products do not exist.',
+            'location.latitude.required_without' => 'Location coordinates are required when Plus Code is not provided.',
+            'location.longitude.required_without' => 'Location coordinates are required when Plus Code is not provided.',
+            'location.plusCode.required_without_all' => 'Plus Code is required when location coordinates are not provided.',
         ];
     }
 }

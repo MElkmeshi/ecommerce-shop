@@ -32,6 +32,8 @@ class Order extends Model
         'phone_number',
         'location',
         'total_amount',
+        'delivery_fee',
+        'delivery_distance',
         'status',
         'payment_method',
         'payment_status',
@@ -47,6 +49,8 @@ class Order extends Model
         return [
             'location' => 'array',
             'total_amount' => 'decimal:2',
+            'delivery_fee' => 'decimal:2',
+            'delivery_distance' => 'decimal:2',
         ];
     }
 

@@ -30,6 +30,8 @@ export default function CheckoutPage() {
   const [creditCardFee, setCreditCardFee] = useState<number>(0);
   const [deliveryMessage, setDeliveryMessage] = useState<string | null>(null);
   const [calculatingFee, setCalculatingFee] = useState(false);
+  const [hasLocationCoordinates, setHasLocationCoordinates] = useState(false);
+  const [showPlusCodeField, setShowPlusCodeField] = useState(false);
 
   // Format price helper
   const formatPrice = (price: number): string => {
@@ -157,6 +159,7 @@ export default function CheckoutPage() {
           setAddress(addressText);
           setLatitude(location.latitude);
           setLongitude(location.longitude);
+          setHasLocationCoordinates(true);
           toast.success('Location retrieved!');
           setLocationLoading(false);
           // Calculate delivery fee
@@ -176,22 +179,26 @@ export default function CheckoutPage() {
             setAddress(addressText);
             setLatitude(latitude);
             setLongitude(longitude);
+            setHasLocationCoordinates(true);
             toast.success('Location retrieved!');
             setLocationLoading(false);
             // Calculate delivery fee
             await calculateDeliveryFee(latitude, longitude);
           },
           (error) => {
-            toast.error('Failed to get location. Please enter manually.');
+            toast.error('Failed to get location. Please use Plus Code below.');
+            setShowPlusCodeField(true);
             setLocationLoading(false);
           }
         );
       } else {
-        toast.error('Location not supported on this device');
+        toast.error('Location not supported. Please use Plus Code below.');
+        setShowPlusCodeField(true);
         setLocationLoading(false);
       }
     } catch (error) {
-      toast.error('Failed to get location');
+      toast.error('Failed to get location. Please use Plus Code below.');
+      setShowPlusCodeField(true);
       setLocationLoading(false);
     }
   };
@@ -325,7 +332,7 @@ export default function CheckoutPage() {
                     placeholder="Enter your full address"
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
-                    required
+                    required={!showPlusCodeField}
                     className="flex-1"
                   />
                   <Button
@@ -338,34 +345,51 @@ export default function CheckoutPage() {
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Click the location icon to auto-fill your address and calculate delivery fee
+                  {hasLocationCoordinates ? (
+                    'Location retrieved successfully'
+                  ) : (
+                    <>
+                      Click the location icon to auto-fill your address and calculate delivery fee.{' '}
+                      {!showPlusCodeField && (
+                        <button
+                          type="button"
+                          onClick={() => setShowPlusCodeField(true)}
+                          className="text-primary underline hover:no-underline"
+                        >
+                          Use Plus Code instead
+                        </button>
+                      )}
+                    </>
+                  )}
                 </p>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="plusCode">Plus Code (Optional)</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="plusCode"
-                    type="text"
-                    placeholder="8G6X+XX Tripoli"
-                    value={plusCode}
-                    onChange={(e) => setPlusCode(e.target.value)}
-                    className="flex-1"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={calculateFromPlusCode}
-                    disabled={calculatingFee}
-                  >
-                    <Calculator className="h-4 w-4" />
-                  </Button>
+              {showPlusCodeField && (
+                <div className="space-y-2">
+                  <Label htmlFor="plusCode">Plus Code</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="plusCode"
+                      type="text"
+                      placeholder="8G6X+XX Tripoli"
+                      value={plusCode}
+                      onChange={(e) => setPlusCode(e.target.value)}
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={calculateFromPlusCode}
+                      disabled={calculatingFee}
+                    >
+                      <Calculator className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Enter Plus Code (e.g., 8G6X+XX Tripoli) and click calculator to calculate delivery fee
+                  </p>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Enter Plus Code and click calculator to calculate delivery fee
-                </p>
-              </div>
+              )}
 
               {distance !== null && (
                 <div className="rounded-lg bg-muted p-3 space-y-1">

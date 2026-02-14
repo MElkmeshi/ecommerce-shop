@@ -8,11 +8,18 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\User;
+use App\Settings\AppSettings;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
 class OrderService
 {
+    public function __construct(
+        private readonly GoogleMapsService $mapsService,
+        private readonly DeliveryFeeCalculator $feeCalculator,
+        private readonly AppSettings $settings
+    ) {}
+
     /**
      * Create a new order.
      *
@@ -73,6 +80,48 @@ class OrderService
                 $totalAmount += $variant->price * $item['quantity'];
             }
 
+            // Calculate delivery fee
+            $deliveryFee = 0;
+            $deliveryDistance = null;
+
+            if (! empty($data['location']['plusCode'])) {
+                // Calculate from Plus Code
+                $distance = $this->mapsService->calculateDistanceFromPlusCode(
+                    $data['location']['plusCode'],
+                    $this->settings->store_latitude,
+                    $this->settings->store_longitude
+                );
+
+                if ($distance !== null) {
+                    $deliveryDistance = $distance;
+                    $feeData = $this->feeCalculator->calculate($distance);
+                    $deliveryFee = $feeData['fee'];
+                }
+            } elseif (isset($data['location']['latitude']) && isset($data['location']['longitude'])) {
+                // Calculate from coordinates
+                $distance = $this->mapsService->calculateDistance(
+                    $this->settings->store_latitude,
+                    $this->settings->store_longitude,
+                    $data['location']['latitude'],
+                    $data['location']['longitude']
+                );
+
+                if ($distance !== null) {
+                    $deliveryDistance = $distance;
+                    $feeData = $this->feeCalculator->calculate($distance);
+                    $deliveryFee = $feeData['fee'];
+                }
+            }
+
+            // Add delivery fee to total
+            $totalAmount += $deliveryFee;
+
+            // Add credit card fee if applicable (2.5% of subtotal + delivery fee)
+            if ($data['paymentMethod'] === 'credit_card') {
+                $creditCardFee = $totalAmount * 0.025;
+                $totalAmount += $creditCardFee;
+            }
+
             // Determine payment status based on payment method
             // Cash orders don't need payment, credit card orders need payment
             $paymentStatus = $data['paymentMethod'] === 'cash' ? 'paid' : 'pending';
@@ -84,6 +133,8 @@ class OrderService
                 'phone_number' => $data['phoneNumber'],
                 'location' => $data['location'],
                 'total_amount' => $totalAmount,
+                'delivery_fee' => $deliveryFee,
+                'delivery_distance' => $deliveryDistance,
                 'status' => $orderStatus,
                 'payment_method' => $data['paymentMethod'],
                 'payment_status' => $paymentStatus,
