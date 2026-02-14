@@ -146,7 +146,7 @@ class ProductSeeder extends Seeder
                         ->toMediaCollection('product_images');
                 } catch (\Exception $e) {
                     // If placeholder service fails, continue without image
-                    $this->command->warn("Could not add image for {$productData['name']['en']}: " . $e->getMessage());
+                    $this->command->warn("Could not add image for {$productData['name']['en']}: ".$e->getMessage());
                 }
             }
         }

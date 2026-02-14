@@ -38,7 +38,7 @@ class TelegramBotService
         $firstName = $user['first_name'] ?? 'there';
         $message = "👋 Welcome to our E-Commerce Shop, {$firstName}!\n\n";
         $message .= "Browse our products, add items to your cart, and place orders directly through Telegram.\n\n";
-        $message .= "Click the button below to open the shop!";
+        $message .= 'Click the button below to open the shop!';
 
         $keyboard = new InlineKeyboardMarkup([
             [
@@ -57,7 +57,7 @@ class TelegramBotService
      */
     public function handleShop(int $chatId): void
     {
-        $message = "🛍️ Click the button below to open our shop:";
+        $message = '🛍️ Click the button below to open our shop:';
 
         $keyboard = new InlineKeyboardMarkup([
             [

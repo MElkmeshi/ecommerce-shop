@@ -42,7 +42,7 @@ export default function CartPage() {
 
         <div className="space-y-4">
           {items.map((item) => (
-            <Card key={item.productId}>
+            <Card key={`${item.productId}-${item.productVariantId || 'no-variant'}`}>
               <CardContent className="p-4">
                 <div className="flex gap-4">
                   {item.imageUrl && (
@@ -55,23 +55,31 @@ export default function CartPage() {
                   <div className="flex flex-1 flex-col justify-between">
                     <div>
                       <h3 className="font-semibold">{item.name}</h3>
+                      {item.variantDisplay && (
+                        <p className="text-xs text-muted-foreground">{item.variantDisplay}</p>
+                      )}
                       <p className="text-sm text-muted-foreground">
                         {Number(item.price).toFixed(2)} LYD each
                       </p>
+                      {item.sku && (
+                        <p className="text-xs text-muted-foreground">SKU: {item.sku}</p>
+                      )}
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Button
                           size="icon"
                           variant="outline"
-                          onClick={() => updateQuantity(item.productId, item.quantity - 1)}
+                          onClick={() => updateQuantity(item.productId, item.quantity - 1, item.productVariantId)}
                         >
                           <Minus className="h-4 w-4" />
                         </Button>
                         <Input
                           type="number"
                           value={item.quantity}
-                          onChange={(e) => updateQuantity(item.productId, parseInt(e.target.value))}
+                          onChange={(e) =>
+                            updateQuantity(item.productId, parseInt(e.target.value), item.productVariantId)
+                          }
                           className="w-16 text-center"
                           min="1"
                           max={item.stock}
@@ -79,7 +87,7 @@ export default function CartPage() {
                         <Button
                           size="icon"
                           variant="outline"
-                          onClick={() => updateQuantity(item.productId, item.quantity + 1)}
+                          onClick={() => updateQuantity(item.productId, item.quantity + 1, item.productVariantId)}
                           disabled={item.quantity >= item.stock}
                         >
                           <Plus className="h-4 w-4" />
@@ -92,7 +100,7 @@ export default function CartPage() {
                         <Button
                           size="icon"
                           variant="destructive"
-                          onClick={() => removeItem(item.productId)}
+                          onClick={() => removeItem(item.productId, item.productVariantId)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

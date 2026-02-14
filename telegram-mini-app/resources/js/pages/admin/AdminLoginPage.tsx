@@ -73,7 +73,7 @@ export default function AdminLoginPage() {
               />
             </div>
           </CardContent>
-          <CardFooter>
+          <CardFooter className="pt-2">
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? 'Logging in...' : 'Login'}
             </Button>

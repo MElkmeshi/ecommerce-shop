@@ -18,6 +18,7 @@ class OrderItem extends Model
     protected $fillable = [
         'order_id',
         'product_id',
+        'product_variant_id',
         'quantity',
         'price',
     ];
@@ -52,6 +53,14 @@ class OrderItem extends Model
     }
 
     /**
+     * Get the product variant for this order item.
+     */
+    public function productVariant(): BelongsTo
+    {
+        return $this->belongsTo(ProductVariant::class);
+    }
+
+    /**
      * Get the subtotal for this order item.
      */
     public function getSubtotalAttribute(): float
@@ -64,6 +73,13 @@ class OrderItem extends Model
      */
     public function getProductName(string $locale = 'en'): string
     {
-        return $this->product->getTranslation('name', $locale);
+        $productName = $this->product->getTranslation('name', $locale);
+
+        if ($this->product_variant_id && $this->relationLoaded('productVariant') && $this->productVariant) {
+            $variantDisplay = $this->productVariant->display_name;
+            $productName .= " ({$variantDisplay})";
+        }
+
+        return $productName;
     }
 }

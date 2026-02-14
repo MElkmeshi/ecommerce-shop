@@ -20,6 +20,7 @@ class AdminAuthMiddleware
             if ($request->expectsJson()) {
                 return response()->json(['error' => 'Unauthorized'], 401);
             }
+
             return redirect()->route('admin.login');
         }
 

@@ -1,4 +1,14 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(php artisan make:migration:*)",
+      "Bash(php artisan make:model:*)",
+      "Bash(php artisan migrate:*)",
+      "Bash(php artisan make:request:*)",
+      "Bash(php artisan:*)",
+      "Bash(vendor/bin/pint:*)"
+    ]
+  },
   "disabledMcpjsonServers": [
     "laravel-boost",
     "herd"

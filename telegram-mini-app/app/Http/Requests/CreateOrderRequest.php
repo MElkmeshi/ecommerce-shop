@@ -29,6 +29,7 @@ class CreateOrderRequest extends FormRequest
             'location.address' => 'required_without:location.latitude|string',
             'items' => 'required|array|min:1',
             'items.*.productId' => 'required|integer|exists:products,id',
+            'items.*.productVariantId' => 'nullable|integer|exists:product_variants,id',
             'items.*.quantity' => 'required|integer|min:1',
         ];
     }

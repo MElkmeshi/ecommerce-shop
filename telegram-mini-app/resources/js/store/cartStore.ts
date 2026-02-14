@@ -3,18 +3,21 @@ import { persist } from 'zustand/middleware';
 
 export interface CartItem {
   productId: number;
+  productVariantId?: number;
   name: string;
+  variantDisplay?: string;
   price: number;
   quantity: number;
   imageUrl?: string;
   stock: number;
+  sku?: string;
 }
 
 interface CartState {
   items: CartItem[];
   addItem: (product: Omit<CartItem, 'quantity'>) => void;
-  removeItem: (productId: number) => void;
-  updateQuantity: (productId: number, quantity: number) => void;
+  removeItem: (productId: number, productVariantId?: number) => void;
+  updateQuantity: (productId: number, quantity: number, productVariantId?: number) => void;
   clearCart: () => void;
   getTotalPrice: () => number;
   getTotalItems: () => number;
@@ -27,14 +30,19 @@ export const useCartStore = create<CartState>()(
 
       addItem: (product) => {
         const items = get().items;
-        const existingItem = items.find((item) => item.productId === product.productId);
+        // Match by both productId and productVariantId (if variant exists)
+        const existingItem = items.find((item) =>
+          item.productId === product.productId &&
+          item.productVariantId === product.productVariantId
+        );
 
         if (existingItem) {
           // Increase quantity if item already in cart
           const newQuantity = Math.min(existingItem.quantity + 1, product.stock);
           set({
             items: items.map((item) =>
-              item.productId === product.productId
+              item.productId === product.productId &&
+              item.productVariantId === product.productVariantId
                 ? { ...item, quantity: newQuantity }
                 : item
             ),
@@ -47,21 +55,23 @@ export const useCartStore = create<CartState>()(
         }
       },
 
-      removeItem: (productId) => {
+      removeItem: (productId, productVariantId) => {
         set({
-          items: get().items.filter((item) => item.productId !== productId),
+          items: get().items.filter((item) =>
+            !(item.productId === productId && item.productVariantId === productVariantId)
+          ),
         });
       },
 
-      updateQuantity: (productId, quantity) => {
+      updateQuantity: (productId, quantity, productVariantId) => {
         if (quantity <= 0) {
-          get().removeItem(productId);
+          get().removeItem(productId, productVariantId);
           return;
         }
 
         set({
           items: get().items.map((item) => {
-            if (item.productId === productId) {
+            if (item.productId === productId && item.productVariantId === productVariantId) {
               // Don't exceed stock
               const newQuantity = Math.min(quantity, item.stock);
               return { ...item, quantity: newQuantity };

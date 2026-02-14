@@ -5,13 +5,18 @@ namespace App\Http\Controllers;
 use App\Http\Requests\GetProductsRequest;
 use App\Models\Product;
 use App\Services\ProductService;
+use App\Services\ProductVariantService;
+use App\Services\VariantTypeService;
+use Illuminate\Http\JsonResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class ProductController extends Controller
 {
     public function __construct(
-        private ProductService $productService
+        private ProductService $productService,
+        private VariantTypeService $variantTypeService,
+        private ProductVariantService $productVariantService
     ) {}
 
     /**
@@ -22,6 +27,7 @@ class ProductController extends Controller
         $filters = $request->validated();
 
         $products = $this->productService->getProducts($filters);
+        $variantTypes = $this->variantTypeService->getAllVariantTypes();
 
         return Inertia::render('ProductsPage', [
             'products' => $products->map(function ($product) {
@@ -31,6 +37,7 @@ class ProductController extends Controller
                     'description' => $product->description,
                     'price' => $product->price,
                     'stock' => $product->stock,
+                    'has_variants' => $product->has_variants,
                     'image_url' => $product->image_url,
                     'thumb_url' => $product->thumb_url,
                     'category' => [
@@ -40,6 +47,7 @@ class ProductController extends Controller
                     ],
                 ];
             }),
+            'variantTypes' => $variantTypes,
             'filters' => $filters,
         ]);
     }
@@ -66,6 +74,43 @@ class ProductController extends Controller
                     'slug' => $product->category->slug,
                 ],
             ],
+        ]);
+    }
+
+    /**
+     * Get variants for a product.
+     */
+    public function getVariants(int $id): JsonResponse
+    {
+        $product = $this->productVariantService->getProductWithVariants($id);
+
+        if (! $product) {
+            return response()->json(['message' => 'Product not found'], 404);
+        }
+
+        return response()->json([
+            'has_variants' => $product->has_variants,
+            'variants' => $product->productVariants->map(function ($variant) {
+                return [
+                    'id' => $variant->id,
+                    'sku' => $variant->sku,
+                    'price' => $variant->price,
+                    'stock' => $variant->stock,
+                    'is_default' => $variant->is_default,
+                    'display_name' => $variant->display_name,
+                    'variant_values' => $variant->variantValues->map(function ($value) {
+                        return [
+                            'id' => $value->id,
+                            'value' => $value->value,
+                            'variant_type' => [
+                                'id' => $value->variantType->id,
+                                'name' => $value->variantType->name,
+                                'slug' => $value->variantType->slug,
+                            ],
+                        ];
+                    }),
+                ];
+            }),
         ]);
     }
 }

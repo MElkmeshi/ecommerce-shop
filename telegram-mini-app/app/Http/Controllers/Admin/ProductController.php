@@ -37,14 +37,24 @@ class ProductController extends Controller
             'products' => $products->map(function ($product) {
                 return [
                     'id' => $product->id,
-                    'name' => $product->name,
-                    'description' => $product->description,
+                    'name' => [
+                        'en' => $product->getTranslation('name', 'en'),
+                        'ar' => $product->getTranslation('name', 'ar'),
+                    ],
+                    'description' => [
+                        'en' => $product->getTranslation('description', 'en', false) ?? '',
+                        'ar' => $product->getTranslation('description', 'ar', false) ?? '',
+                    ],
                     'price' => $product->price,
                     'stock' => $product->stock,
+                    'has_variants' => $product->has_variants,
                     'category_id' => $product->category_id,
                     'category' => [
                         'id' => $product->category->id,
-                        'name' => $product->category->name,
+                        'name' => [
+                            'en' => $product->category->getTranslation('name', 'en'),
+                            'ar' => $product->category->getTranslation('name', 'ar'),
+                        ],
                         'slug' => $product->category->slug,
                     ],
                     'image_url' => $product->image_url,

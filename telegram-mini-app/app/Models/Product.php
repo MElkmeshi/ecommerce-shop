@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
@@ -33,6 +34,7 @@ class Product extends Model implements HasMedia
         'price',
         'stock',
         'category_id',
+        'has_variants',
     ];
 
     /**
@@ -45,6 +47,7 @@ class Product extends Model implements HasMedia
         return [
             'price' => 'decimal:2',
             'stock' => 'integer',
+            'has_variants' => 'boolean',
         ];
     }
 
@@ -85,6 +88,22 @@ class Product extends Model implements HasMedia
     }
 
     /**
+     * Get the product variants.
+     */
+    public function productVariants(): HasMany
+    {
+        return $this->hasMany(ProductVariant::class);
+    }
+
+    /**
+     * Get the default product variant.
+     */
+    public function defaultVariant(): HasOne
+    {
+        return $this->hasOne(ProductVariant::class)->where('is_default', true);
+    }
+
+    /**
      * Decrement the product stock.
      */
     public function decrementStock(int $quantity): void
@@ -122,5 +141,29 @@ class Product extends Model implements HasMedia
     public function getPreviewUrlAttribute(): ?string
     {
         return $this->getFirstMediaUrl('product_images', 'preview');
+    }
+
+    /**
+     * Get the effective price (from default variant if has variants, otherwise base price).
+     */
+    public function getEffectivePriceAttribute(): float
+    {
+        if ($this->has_variants && $this->relationLoaded('defaultVariant') && $this->defaultVariant) {
+            return (float) $this->defaultVariant->price;
+        }
+
+        return (float) $this->price;
+    }
+
+    /**
+     * Get the effective stock (from default variant if has variants, otherwise base stock).
+     */
+    public function getEffectiveStockAttribute(): int
+    {
+        if ($this->has_variants && $this->relationLoaded('defaultVariant') && $this->defaultVariant) {
+            return $this->defaultVariant->stock;
+        }
+
+        return $this->stock;
     }
 }

@@ -6,6 +6,7 @@ use App\Exceptions\InsufficientStockException;
 use App\Jobs\SendOrderWebhookJob;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
@@ -31,9 +32,13 @@ class OrderService
                 ]
             );
 
-            // Validate all products exist and have sufficient stock
+            // Validate all products and variants exist and have sufficient stock
             $productIds = array_column($data['items'], 'productId');
             $products = Product::whereIn('id', $productIds)->get()->keyBy('id');
+
+            // Collect variant IDs if any
+            $variantIds = array_filter(array_column($data['items'], 'productVariantId'));
+            $variants = $variantIds ? ProductVariant::whereIn('id', $variantIds)->get()->keyBy('id') : collect();
 
             foreach ($data['items'] as $item) {
                 $product = $products->get($item['productId']);
@@ -42,18 +47,38 @@ class OrderService
                     throw new \Exception("Product {$item['productId']} not found");
                 }
 
-                if (! $product->isInStock($item['quantity'])) {
-                    throw new InsufficientStockException(
-                        "Insufficient stock for product: {$product->getTranslation('name', 'en')}"
-                    );
+                // Check stock on variant if specified, otherwise on product
+                if (! empty($item['productVariantId'])) {
+                    $variant = $variants->get($item['productVariantId']);
+
+                    if (! $variant) {
+                        throw new \Exception("Product variant {$item['productVariantId']} not found");
+                    }
+
+                    if (! $variant->isInStock($item['quantity'])) {
+                        throw new InsufficientStockException(
+                            "Insufficient stock for product variant: {$product->getTranslation('name', 'en')} ({$variant->display_name})"
+                        );
+                    }
+                } else {
+                    if (! $product->isInStock($item['quantity'])) {
+                        throw new InsufficientStockException(
+                            "Insufficient stock for product: {$product->getTranslation('name', 'en')}"
+                        );
+                    }
                 }
             }
 
             // Calculate total amount
             $totalAmount = 0;
             foreach ($data['items'] as $item) {
-                $product = $products->get($item['productId']);
-                $totalAmount += $product->price * $item['quantity'];
+                if (! empty($item['productVariantId'])) {
+                    $variant = $variants->get($item['productVariantId']);
+                    $totalAmount += $variant->price * $item['quantity'];
+                } else {
+                    $product = $products->get($item['productId']);
+                    $totalAmount += $product->price * $item['quantity'];
+                }
             }
 
             // Create order
@@ -69,14 +94,29 @@ class OrderService
             foreach ($data['items'] as $item) {
                 $product = $products->get($item['productId']);
 
+                // Determine price and variant
+                if (! empty($item['productVariantId'])) {
+                    $variant = $variants->get($item['productVariantId']);
+                    $price = $variant->price;
+                    $variantId = $variant->id;
+                } else {
+                    $price = $product->price;
+                    $variantId = null;
+                }
+
                 $order->items()->create([
                     'product_id' => $product->id,
+                    'product_variant_id' => $variantId,
                     'quantity' => $item['quantity'],
-                    'price' => $product->price, // Snapshot price
+                    'price' => $price, // Snapshot price
                 ]);
 
-                // Decrement stock
-                $product->decrementStock($item['quantity']);
+                // Decrement stock on variant or product
+                if ($variantId) {
+                    $variant->decrementStock($item['quantity']);
+                } else {
+                    $product->decrementStock($item['quantity']);
+                }
             }
 
             // Dispatch webhook notification job (async, non-blocking)
@@ -98,7 +138,7 @@ class OrderService
         }
 
         return Order::where('user_id', $user->id)
-            ->with(['items.product.category'])
+            ->with(['items.product.category', 'items.productVariant'])
             ->orderBy('created_at', 'desc')
             ->get();
     }

@@ -27,6 +27,8 @@ class GetProductsRequest extends FormRequest
             'minPrice' => 'nullable|numeric|min:0',
             'maxPrice' => 'nullable|numeric|min:0',
             'sort' => 'nullable|in:name,price-asc,price-desc,newest',
+            'variantValues' => 'nullable|array',
+            'variantValues.*' => 'integer|exists:variant_values,id',
         ];
     }
 }

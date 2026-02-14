@@ -12,7 +12,7 @@ class ProductService
      */
     public function getProducts(array $filters): Collection
     {
-        $query = Product::with('category');
+        $query = Product::with(['category', 'productVariants.variantValues']);
 
         // Search by name (check both English and Arabic)
         if (! empty($filters['search'])) {
@@ -28,6 +28,14 @@ class ProductService
             $query->whereHas('category', function ($q) use ($filters) {
                 $q->where('slug', $filters['category']);
             });
+        }
+
+        // Filter by variant values
+        if (! empty($filters['variantValues']) && is_array($filters['variantValues'])) {
+            $query->where('has_variants', true)
+                ->whereHas('productVariants.variantValues', function ($q) use ($filters) {
+                    $q->whereIn('variant_value_id', $filters['variantValues']);
+                });
         }
 
         // Filter by price range
@@ -66,5 +74,17 @@ class ProductService
     public function getProductById(int $id): ?Product
     {
         return Product::with('category')->find($id);
+    }
+
+    /**
+     * Get a product with variants by ID.
+     */
+    public function getProductWithVariants(int $id): ?Product
+    {
+        return Product::with([
+            'category',
+            'productVariants.variantValues.variantType',
+            'defaultVariant',
+        ])->find($id);
     }
 }

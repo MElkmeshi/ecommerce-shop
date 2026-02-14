@@ -26,6 +26,7 @@ class ProductService
             'price' => $data['price'],
             'stock' => $data['stock'],
             'category_id' => $data['categoryId'],
+            'has_variants' => $data['hasVariants'] ?? false,
         ]);
 
         // Handle image upload if present
@@ -68,6 +69,10 @@ class ProductService
 
         if (isset($data['categoryId'])) {
             $updateData['category_id'] = $data['categoryId'];
+        }
+
+        if (isset($data['hasVariants'])) {
+            $updateData['has_variants'] = $data['hasVariants'];
         }
 
         $product->update($updateData);

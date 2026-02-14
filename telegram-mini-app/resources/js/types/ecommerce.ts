@@ -1,3 +1,28 @@
+export interface VariantType {
+  id: number;
+  name: { en: string; ar: string };
+  slug: string;
+  variant_values: VariantValue[];
+}
+
+export interface VariantValue {
+  id: number;
+  variant_type_id: number;
+  value: { en: string; ar: string };
+  variant_type?: VariantType;
+}
+
+export interface ProductVariant {
+  id: number;
+  product_id: number;
+  sku?: string;
+  price: number;
+  stock: number;
+  is_default: boolean;
+  display_name: string;
+  variant_values: VariantValue[];
+}
+
 export interface Product {
   id: number;
   name: string;
@@ -7,6 +32,8 @@ export interface Product {
   thumb_url?: string;
   preview_url?: string;
   stock: number;
+  has_variants?: boolean;
+  product_variants?: ProductVariant[];
   category: {
     id: number;
     name: string;

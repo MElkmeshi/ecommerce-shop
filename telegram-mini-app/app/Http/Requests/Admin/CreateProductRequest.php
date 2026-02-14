@@ -31,6 +31,7 @@ class CreateProductRequest extends FormRequest
             'price' => 'required|numeric|min:0',
             'stock' => 'required|integer|min:0',
             'categoryId' => 'required|integer|exists:categories,id',
+            'hasVariants' => 'nullable|boolean',
             'image' => 'nullable|image|max:5120', // Max 5MB
         ];
     }

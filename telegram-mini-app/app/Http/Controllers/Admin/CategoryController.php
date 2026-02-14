@@ -50,7 +50,7 @@ class CategoryController extends Controller
         $validated = $request->validate([
             'name.en' => 'required|string|max:255',
             'name.ar' => 'required|string|max:255',
-            'slug' => 'required|string|max:255|unique:categories,slug,' . $id,
+            'slug' => 'required|string|max:255|unique:categories,slug,'.$id,
         ]);
 
         $category->update($validated);

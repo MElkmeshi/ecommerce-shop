@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { LayoutGrid, Package, FolderTree, ShoppingCart, LogOut } from 'lucide-react';
+import { LayoutGrid, Package, FolderTree, ShoppingCart, LogOut, Tags } from 'lucide-react';
 import { NavMain } from '@/components/nav-main';
 import {
     Sidebar,
@@ -28,6 +28,11 @@ const mainNavItems: NavItem[] = [
         title: 'Categories',
         href: '/admin/categories',
         icon: FolderTree,
+    },
+    {
+        title: 'Variant Types',
+        href: '/admin/variant-types',
+        icon: Tags,
     },
     {
         title: 'Orders',
