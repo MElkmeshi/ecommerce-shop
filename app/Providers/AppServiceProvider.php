@@ -17,7 +17,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->singleton(GoogleMapsService::class, function ($app) {
+        $this->app->bind(GoogleMapsService::class, function ($app) {
             $settings = $app->make(AppSettings::class);
 
             return new GoogleMapsService($settings->google_maps_api_key ?? '');

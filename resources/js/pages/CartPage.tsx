@@ -3,17 +3,85 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useCartStore } from '@/store/cartStore';
-import { Minus, Plus, ShoppingBag, Trash2 } from 'lucide-react';
+import { Minus, Plus, ShoppingBag, Trash2, AlertCircle, Package, Home } from 'lucide-react';
 import { router } from '@inertiajs/react';
+import { useEffect, useState } from 'react';
+import axios from 'axios';
+import { toast } from 'sonner';
+
+interface StockStatus {
+  productVariantId: number;
+  inStock: boolean;
+  availableStock: number;
+  message: string | null;
+}
 
 export default function CartPage() {
   const items = useCartStore((state) => state.items);
   const updateQuantity = useCartStore((state) => state.updateQuantity);
   const removeItem = useCartStore((state) => state.removeItem);
-  const getTotalPrice = useCartStore((state) => state.getTotalPrice);
-  const getTotalItems = useCartStore((state) => state.getTotalItems);
+
+  const [stockStatus, setStockStatus] = useState<Record<number, StockStatus>>({});
+  const [validatingStock, setValidatingStock] = useState(false);
+
+  // Calculate totals from items directly
+  const getTotalPrice = () => {
+    return items.reduce((total, item) => total + item.price * item.quantity, 0);
+  };
+
+  const getTotalItems = () => {
+    return items.reduce((total, item) => total + item.quantity, 0);
+  };
+
+  // Validate stock when items change
+  useEffect(() => {
+    if (items.length === 0) {
+      setStockStatus({});
+      return;
+    }
+
+    const validateStock = async () => {
+      setValidatingStock(true);
+      try {
+        const response = await axios.post('/api/cart/validate-stock', {
+          items: items.map((item) => ({
+            productVariantId: item.productVariantId,
+            quantity: item.quantity,
+          })),
+        });
+
+        const statusMap: Record<number, StockStatus> = {};
+        response.data.stockStatus.forEach((status: StockStatus) => {
+          statusMap[status.productVariantId] = status;
+        });
+
+        setStockStatus(statusMap);
+
+        // Show warning if any items are out of stock
+        const outOfStockItems = response.data.stockStatus.filter(
+          (status: StockStatus) => !status.inStock
+        );
+        if (outOfStockItems.length > 0) {
+          toast.error('Some items in your cart have insufficient stock');
+        }
+      } catch (error) {
+        console.error('Failed to validate stock:', error);
+      } finally {
+        setValidatingStock(false);
+      }
+    };
+
+    validateStock();
+  }, [items]);
+
+  // Check if checkout should be disabled
+  const hasStockIssues = Object.values(stockStatus).some((status) => !status.inStock);
 
   const handleCheckout = () => {
+    if (hasStockIssues) {
+      toast.error('Please remove or adjust items with insufficient stock');
+      return;
+    }
     router.visit('/checkout');
   };
 
@@ -43,30 +111,63 @@ export default function CartPage() {
   return (
     <div className="min-h-screen bg-background p-4">
       <div className="mx-auto max-w-3xl">
-        <h1 className="mb-6 text-2xl font-bold">Shopping Cart</h1>
+        <div className="mb-6 flex items-center justify-between">
+          <h1 className="text-2xl font-bold">Shopping Cart</h1>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => (window.location.href = '/')}
+            >
+              <Home className="mr-2 h-4 w-4" />
+              Products
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => (window.location.href = '/orders')}
+            >
+              <Package className="mr-2 h-4 w-4" />
+              Orders
+            </Button>
+          </div>
+        </div>
 
         <div className="space-y-3">
-          {items.map((item) => (
-            <Card key={`${item.productId}-${item.productVariantId || 'no-variant'}`}>
-              <CardContent className="p-3">
-                <div className="flex gap-3">
-                  {item.imageUrl && (
-                    <img
-                      src={item.imageUrl}
-                      alt={item.name}
-                      className="h-16 w-16 rounded-lg object-cover"
-                    />
-                  )}
-                  <div className="flex flex-1 flex-col justify-between">
-                    <div>
-                      <h3 className="font-semibold text-sm">{item.name}</h3>
-                      {item.variantDisplay && (
-                        <p className="text-xs text-muted-foreground">{item.variantDisplay}</p>
-                      )}
-                      <p className="text-sm text-muted-foreground">
-                        {formatPrice(Number(item.price))} LYD each
-                      </p>
-                    </div>
+          {items.map((item) => {
+            const itemStockStatus = stockStatus[item.productVariantId];
+            const hasStockIssue = itemStockStatus && !itemStockStatus.inStock;
+
+            return (
+              <Card
+                key={`${item.productId}-${item.productVariantId || 'no-variant'}`}
+                className={hasStockIssue ? 'border-destructive' : ''}
+              >
+                <CardContent className="p-3">
+                  <div className="flex gap-3">
+                    {item.imageUrl && (
+                      <img
+                        src={item.imageUrl}
+                        alt={item.name}
+                        className="h-16 w-16 rounded-lg object-cover"
+                      />
+                    )}
+                    <div className="flex flex-1 flex-col justify-between">
+                      <div>
+                        <h3 className="font-semibold text-sm">{item.name}</h3>
+                        {item.variantDisplay && (
+                          <p className="text-xs text-muted-foreground">{item.variantDisplay}</p>
+                        )}
+                        {hasStockIssue && (
+                          <div className="mt-1 flex items-center gap-1 text-xs text-destructive">
+                            <AlertCircle className="h-3 w-3" />
+                            <span>{itemStockStatus.message}</span>
+                          </div>
+                        )}
+                        <p className="text-sm text-muted-foreground">
+                          {formatPrice(Number(item.price))} LYD each
+                        </p>
+                      </div>
                     <div className="flex items-center justify-between mt-2">
                       <div className="flex items-center gap-1">
                         <Button
@@ -115,7 +216,8 @@ export default function CartPage() {
                 </div>
               </CardContent>
             </Card>
-          ))}
+            );
+          })}
         </div>
 
         <Card className="mt-6">
@@ -132,9 +234,20 @@ export default function CartPage() {
               <span className="text-lg font-bold">{formatPrice(getTotalPrice())} LYD</span>
             </div>
           </CardContent>
-          <CardFooter>
-            <Button className="w-full" size="lg" onClick={handleCheckout}>
-              Proceed to Checkout
+          <CardFooter className="flex-col gap-2">
+            {hasStockIssues && (
+              <div className="w-full flex items-center gap-2 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+                <AlertCircle className="h-4 w-4" />
+                <span>Some items have insufficient stock. Please adjust quantities or remove them.</span>
+              </div>
+            )}
+            <Button
+              className="w-full"
+              size="lg"
+              onClick={handleCheckout}
+              disabled={hasStockIssues || validatingStock}
+            >
+              {validatingStock ? 'Checking stock...' : 'Proceed to Checkout'}
             </Button>
           </CardFooter>
         </Card>

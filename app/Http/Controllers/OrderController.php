@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\CreateOrderRequest;
+use App\Jobs\CancelUnpaidOrder;
+use App\Payments\PaymentManager;
 use App\Services\DeliveryFeeCalculator;
 use App\Services\GoogleMapsService;
 use App\Services\OrderService;
@@ -18,7 +20,8 @@ class OrderController extends Controller
         private readonly OrderService $orderService,
         private readonly GoogleMapsService $mapsService,
         private readonly DeliveryFeeCalculator $feeCalculator,
-        private readonly AppSettings $settings
+        private readonly AppSettings $settings,
+        private readonly PaymentManager $paymentManager
     ) {}
 
     /**
@@ -32,15 +35,40 @@ class OrderController extends Controller
 
             $order = $this->orderService->createOrder($orderData, $telegramUser);
 
-            return response()->json([
+            $response = [
                 'success' => true,
                 'order' => [
                     'id' => $order->id,
                     'total_amount' => $order->total_amount,
                     'status' => $order->status,
+                    'payment_status' => $order->payment_status,
+                    'payment_method' => $order->payment_method,
                     'created_at' => $order->created_at,
                 ],
-            ], 201);
+            ];
+
+            // If payment method is credit card, create payment session
+            if ($orderData['paymentMethod'] === 'credit_card') {
+                $session = $this->paymentManager->createSession(
+                    providerCode: 'moamalat',
+                    orderId: $order->id,
+                    amount: $order->total_amount
+                );
+
+                $redirectUrl = $this->paymentManager->init($session);
+
+                $response['payment'] = [
+                    'session_id' => $session->id,
+                    'redirect_url' => $redirectUrl,
+                    'amount' => $session->amount,
+                    'amount_with_commission' => $session->amount_with_commission,
+                ];
+
+                // Dispatch job to cancel unpaid order after 30 minutes
+                CancelUnpaidOrder::dispatch($order)->delay(now()->addMinutes(30));
+            }
+
+            return response()->json($response, 201);
         } catch (\App\Exceptions\InsufficientStockException $e) {
             return response()->json([
                 'success' => false,
@@ -95,22 +123,36 @@ class OrderController extends Controller
             'longitude' => 'required|numeric|min:-180|max:180',
         ]);
 
-        $distance = $this->mapsService->calculateDistance(
-            $this->settings->store_latitude,
-            $this->settings->store_longitude,
-            $request->input('latitude'),
-            $request->input('longitude')
+        $latitude = $request->input('latitude');
+        $longitude = $request->input('longitude');
+
+        // Round coordinates to 2 decimal places for cache key (approx 1 km precision)
+        $latRounded = round($latitude, 2);
+        $lonRounded = round($longitude, 2);
+        $cacheKey = "delivery_fee:{$latRounded}:{$lonRounded}";
+
+        // Cache for 7 days
+        return response()->json(
+            cache()->remember($cacheKey, now()->addDays(7), function () use ($latitude, $longitude) {
+                $distance = $this->mapsService->calculateDistance(
+                    $this->settings->store_latitude,
+                    $this->settings->store_longitude,
+                    $latitude,
+                    $longitude
+                );
+
+                if ($distance === null) {
+                    // Don't cache errors
+                    cache()->forget('delivery_fee:'.round($latitude, 2).':'.round($longitude, 2));
+
+                    return [
+                        'error' => 'Failed to calculate distance',
+                    ];
+                }
+
+                return $this->feeCalculator->calculate($distance);
+            })
         );
-
-        if ($distance === null) {
-            return response()->json([
-                'error' => 'Failed to calculate distance',
-            ], 400);
-        }
-
-        $result = $this->feeCalculator->calculate($distance);
-
-        return response()->json($result);
     }
 
     /**
@@ -122,20 +164,29 @@ class OrderController extends Controller
             'plus_code' => 'required|string',
         ]);
 
-        $distance = $this->mapsService->calculateDistanceFromPlusCode(
-            $request->input('plus_code'),
-            $this->settings->store_latitude,
-            $this->settings->store_longitude
+        $plusCode = strtoupper(trim($request->input('plus_code')));
+        $cacheKey = "delivery_fee:pluscode:{$plusCode}";
+
+        // Cache for 7 days
+        return response()->json(
+            cache()->remember($cacheKey, now()->addDays(7), function () use ($plusCode) {
+                $distance = $this->mapsService->calculateDistanceFromPlusCode(
+                    $plusCode,
+                    $this->settings->store_latitude,
+                    $this->settings->store_longitude
+                );
+
+                if ($distance === null) {
+                    // Don't cache errors
+                    cache()->forget("delivery_fee:pluscode:{$plusCode}");
+
+                    return [
+                        'error' => 'Failed to calculate distance from Plus Code',
+                    ];
+                }
+
+                return $this->feeCalculator->calculate($distance);
+            })
         );
-
-        if ($distance === null) {
-            return response()->json([
-                'error' => 'Failed to calculate distance from Plus Code',
-            ], 400);
-        }
-
-        $result = $this->feeCalculator->calculate($distance);
-
-        return response()->json($result);
     }
 }

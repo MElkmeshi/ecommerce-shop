@@ -8,7 +8,7 @@ import { useState, useEffect } from 'react';
 import { router } from '@inertiajs/react';
 import { toast } from 'sonner';
 import axios from 'axios';
-import { MapPin, Calculator } from 'lucide-react';
+import { MapPin, Calculator, Home, Package } from 'lucide-react';
 import { locationManager } from '@tma.js/sdk';
 
 export default function CheckoutPage() {
@@ -211,6 +211,22 @@ export default function CheckoutPage() {
       // Get Telegram WebApp initData
       const initData = (window as any).Telegram?.WebApp?.initData || '';
 
+      // Prepare headers
+      const headers: Record<string, string> = {};
+
+      if (initData) {
+        headers['x-telegram-init-data'] = initData;
+      } else {
+        // For local development without Telegram, use mock header
+        headers['X-Mock-Telegram-User'] = JSON.stringify({
+          id: 999999,
+          first_name: 'Test',
+          last_name: 'User',
+          username: 'testuser',
+          language_code: 'en',
+        });
+      }
+
       const response = await axios.post('/orders', {
         phoneNumber,
         location: {
@@ -226,15 +242,20 @@ export default function CheckoutPage() {
           quantity: item.quantity,
         })),
       }, {
-        headers: {
-          'x-telegram-init-data': initData,
-        },
+        headers,
       });
 
       if (response.data.success) {
         toast.success('Order placed successfully!');
         clearCart();
-        router.visit('/orders');
+
+        // If credit card payment, redirect to payment page
+        if (response.data.payment && response.data.payment.redirect_url) {
+          window.location.href = response.data.payment.redirect_url;
+        } else {
+          // Cash on delivery, go to orders page
+          router.visit('/orders');
+        }
       }
     } catch (error: any) {
       toast.error(error.response?.data?.error || 'Failed to place order');
@@ -251,7 +272,27 @@ export default function CheckoutPage() {
   return (
     <div className="min-h-screen bg-background p-4">
       <div className="mx-auto max-w-2xl">
-        <h1 className="mb-6 text-2xl font-bold">Checkout</h1>
+        <div className="mb-6 flex items-center justify-between">
+          <h1 className="text-2xl font-bold">Checkout</h1>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => (window.location.href = '/')}
+            >
+              <Home className="mr-2 h-4 w-4" />
+              Products
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => (window.location.href = '/orders')}
+            >
+              <Package className="mr-2 h-4 w-4" />
+              Orders
+            </Button>
+          </div>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <Card>

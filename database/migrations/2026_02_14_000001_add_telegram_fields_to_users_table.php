@@ -16,13 +16,11 @@ return new class extends Migration
             $table->string('email')->nullable()->change();
             $table->string('password')->nullable()->change();
 
-            // Make username nullable
-            $table->string('username')->nullable()->change();
-
             // Add Telegram fields
             $table->bigInteger('telegram_id')->unique()->nullable()->after('id');
             $table->string('first_name')->nullable()->after('telegram_id');
             $table->string('last_name')->nullable()->after('first_name');
+            $table->string('username')->nullable()->after('last_name');
             $table->string('language_code', 10)->nullable()->after('username');
         });
     }
@@ -37,13 +35,13 @@ return new class extends Migration
                 'telegram_id',
                 'first_name',
                 'last_name',
+                'username',
                 'language_code',
             ]);
 
             // Revert email and password to non-nullable
             $table->string('email')->nullable(false)->change();
             $table->string('password')->nullable(false)->change();
-            $table->string('username')->nullable(false)->change();
         });
     }
 };

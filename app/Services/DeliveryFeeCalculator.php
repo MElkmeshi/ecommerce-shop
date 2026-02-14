@@ -37,7 +37,7 @@ class DeliveryFeeCalculator
         }
 
         return [
-            'fee' => round($fee, 2),
+            'fee' => floor($fee),
             'distance' => round($distanceKm, 2),
             'withinRange' => true,
             'message' => null,

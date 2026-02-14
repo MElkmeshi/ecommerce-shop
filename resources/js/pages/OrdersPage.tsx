@@ -1,7 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import type { Order } from '@/types/ecommerce';
-import { Package } from 'lucide-react';
+import { Package, Home, ShoppingCart } from 'lucide-react';
 
 interface Props {
   orders: Order[];
@@ -25,7 +26,27 @@ export default function OrdersPage({ orders }: Props) {
   return (
     <div className="min-h-screen bg-background p-4">
       <div className="mx-auto max-w-4xl">
-        <h1 className="mb-6 text-2xl font-bold">My Orders</h1>
+        <div className="mb-6 flex items-center justify-between">
+          <h1 className="text-2xl font-bold">My Orders</h1>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => (window.location.href = '/')}
+            >
+              <Home className="mr-2 h-4 w-4" />
+              Products
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => (window.location.href = '/cart')}
+            >
+              <ShoppingCart className="mr-2 h-4 w-4" />
+              Cart
+            </Button>
+          </div>
+        </div>
 
         {orders.length === 0 ? (
           <Card>

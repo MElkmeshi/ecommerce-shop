@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/sheet';
 import { useCartStore } from '@/store/cartStore';
 import type { Product, VariantType, ProductVariant } from '@/types/ecommerce';
-import { ShoppingCart, Search, Plus, Minus, Filter } from 'lucide-react';
+import { ShoppingCart, Search, Plus, Minus, Filter, Package } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -213,14 +213,24 @@ export default function ProductsPage({
             {/* Header */}
             <div className="mb-6 flex items-center justify-between">
                 <h1 className="text-2xl font-bold">Products</h1>
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => (window.location.href = '/cart')}
-                >
-                    <ShoppingCart className="mr-2 h-4 w-4" />
-                    Cart ({totalItems})
-                </Button>
+                <div className="flex gap-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => (window.location.href = '/orders')}
+                    >
+                        <Package className="mr-2 h-4 w-4" />
+                        Orders
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => (window.location.href = '/cart')}
+                    >
+                        <ShoppingCart className="mr-2 h-4 w-4" />
+                        Cart ({totalItems})
+                    </Button>
+                </div>
             </div>
 
             {/* Search Bar and Filter Button */}

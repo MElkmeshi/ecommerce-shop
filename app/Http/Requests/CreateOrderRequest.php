@@ -27,6 +27,7 @@ class CreateOrderRequest extends FormRequest
             'location.latitude' => 'required_without:location.address|numeric',
             'location.longitude' => 'required_without:location.address|numeric',
             'location.address' => 'required_without:location.latitude|string',
+            'paymentMethod' => 'required|string|in:cash,credit_card',
             'items' => 'required|array|min:1',
             'items.*.productId' => 'required|integer|exists:products,id',
             'items.*.productVariantId' => 'nullable|integer|exists:product_variants,id',

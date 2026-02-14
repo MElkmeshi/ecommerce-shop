@@ -11,7 +11,9 @@ use App\Http\Controllers\Admin\StockManagementController as AdminStockManagement
 use App\Http\Controllers\Admin\VariantTypeController as AdminVariantTypeController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\MoamalatPageController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\TelegramBotController;
 use App\Http\Controllers\VariantTypeController;
@@ -30,6 +32,7 @@ Route::get('/api/variant-types', [VariantTypeController::class, 'index'])->name(
 Route::get('/api/products/{id}/variants', [ProductController::class, 'getVariants'])->name('api.products.variants');
 Route::post('/api/calculate-delivery-fee', [OrderController::class, 'calculateDeliveryFee'])->name('api.calculate-delivery-fee');
 Route::post('/api/calculate-delivery-fee-pluscode', [OrderController::class, 'calculateDeliveryFeeFromPlusCode'])->name('api.calculate-delivery-fee-pluscode');
+Route::post('/api/cart/validate-stock', [CartController::class, 'validateStock'])->name('api.cart.validate-stock');
 
 // Telegram Authenticated Routes
 Route::middleware('telegram.auth')->group(function () {
@@ -95,6 +98,17 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/api/orders', [AdminOrderController::class, 'apiIndex'])->name('api.orders.index');
         Route::patch('/api/orders/{id}/status', [AdminOrderController::class, 'updateStatus'])->name('api.orders.updateStatus');
     });
+});
+
+// Payment Routes
+Route::prefix('payments')->name('payments.')->group(function () {
+    Route::post('/init', [PaymentController::class, 'init'])->name('init');
+    Route::get('/status', [PaymentController::class, 'status'])->name('status');
+    Route::get('/providers', [PaymentController::class, 'providers'])->name('providers');
+
+    // Moamalat specific routes
+    Route::get('/moamalat/lightbox/{session}', [MoamalatPageController::class, 'show'])->name('moamalat.lightbox');
+    Route::post('/moamalat/client-notify/{session}', [MoamalatPageController::class, 'handle'])->name('moamalat.client-notify');
 });
 
 // Telegram Bot Webhook

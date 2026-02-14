@@ -33,6 +33,8 @@ class Order extends Model
         'location',
         'total_amount',
         'status',
+        'payment_method',
+        'payment_status',
     ];
 
     /**
@@ -62,6 +64,14 @@ class Order extends Model
     public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    /**
+     * Get the payment session for the order.
+     */
+    public function paymentSession(): HasMany
+    {
+        return $this->hasMany(PaymentSession::class);
     }
 
     /**

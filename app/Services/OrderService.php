@@ -73,13 +73,20 @@ class OrderService
                 $totalAmount += $variant->price * $item['quantity'];
             }
 
+            // Determine payment status based on payment method
+            // Cash orders don't need payment, credit card orders need payment
+            $paymentStatus = $data['paymentMethod'] === 'cash' ? 'paid' : 'pending';
+            $orderStatus = Order::STATUS_PENDING;
+
             // Create order
             $order = Order::create([
                 'user_id' => $user->id,
                 'phone_number' => $data['phoneNumber'],
                 'location' => $data['location'],
                 'total_amount' => $totalAmount,
-                'status' => Order::STATUS_PENDING,
+                'status' => $orderStatus,
+                'payment_method' => $data['paymentMethod'],
+                'payment_status' => $paymentStatus,
             ]);
 
             // Create order items and decrement stock
