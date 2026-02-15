@@ -50,9 +50,45 @@ class GoogleMapsController extends Controller
                 ]);
             }
 
+            // Try to extract coordinates from the URL
+            // Format: /search/32.828373,+13.213278 or /@32.828373,13.213278
+            if (preg_match('/[\/\@](-?\d+\.\d+),\s*[\+%2B]?(-?\d+\.\d+)/', $finalUrl, $coordMatches)) {
+                $latitude = (float) $coordMatches[1];
+                $longitude = (float) $coordMatches[2];
+
+                // Use Google Maps Geocoding API to convert coordinates to Plus Code
+                $apiKey = config('services.google_maps.api_key');
+                if ($apiKey) {
+                    $geocodeResponse = \Illuminate\Support\Facades\Http::get('https://maps.googleapis.com/maps/api/geocode/json', [
+                        'latlng' => "{$latitude},{$longitude}",
+                        'key' => $apiKey,
+                    ]);
+
+                    if ($geocodeResponse->successful()) {
+                        $data = $geocodeResponse->json();
+                        if (isset($data['plus_code']['global_code'])) {
+                            return response()->json([
+                                'success' => true,
+                                'plusCode' => $data['plus_code']['global_code'],
+                                'finalUrl' => $finalUrl,
+                                'coordinates' => ['lat' => $latitude, 'lng' => $longitude],
+                            ]);
+                        }
+                    }
+                }
+
+                // If API call fails or no Plus Code, return coordinates
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Found coordinates but could not convert to Plus Code',
+                    'finalUrl' => $finalUrl,
+                    'coordinates' => ['lat' => $latitude, 'lng' => $longitude],
+                ], 404);
+            }
+
             return response()->json([
                 'success' => false,
-                'error' => 'Could not extract Plus Code from the URL',
+                'error' => 'Could not extract Plus Code or coordinates from the URL',
                 'finalUrl' => $finalUrl,
             ], 404);
         } catch (\Exception $e) {
