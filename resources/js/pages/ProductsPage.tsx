@@ -11,16 +11,9 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import {
-    Sheet,
-    SheetContent,
-    SheetHeader,
-    SheetTitle,
-    SheetTrigger,
-} from '@/components/ui/sheet';
 import { useCartStore } from '@/store/cartStore';
 import type { Product, VariantType, ProductVariant } from '@/types/ecommerce';
-import { ShoppingCart, Search, Plus, Minus, Filter, Package } from 'lucide-react';
+import { ShoppingCart, Search, Plus, Minus, Filter, Package, X, ChevronUp } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -254,7 +247,7 @@ export default function ProductsPage({
             )}
 
             {/* Search Bar and Filter Button */}
-            <div className="mb-6 flex gap-2">
+            <div className="mb-4 flex gap-2">
                 <div className="relative flex-1">
                     <Search className="absolute top-3 left-3 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -265,66 +258,114 @@ export default function ProductsPage({
                         className="pl-10"
                     />
                 </div>
-                {/* Mobile Filter Button */}
+                {/* Mobile Filter Toggle Button */}
                 {variantTypes && variantTypes.length > 0 && (
-                    <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
-                        <SheetTrigger asChild>
-                            <Button
-                                variant="outline"
-                                size="icon"
-                                className="lg:hidden"
-                            >
-                                <Filter className="h-4 w-4" />
-                            </Button>
-                        </SheetTrigger>
-                        <SheetContent side="left" className="w-80">
-                            <SheetHeader className="px-6">
-                                <SheetTitle>Filters</SheetTitle>
-                            </SheetHeader>
-                            <div className="mt-6 space-y-4 px-6">
-                                {variantTypes.map((variantType) => (
-                                    <div
-                                        key={variantType.id}
-                                        className="space-y-2"
-                                    >
-                                        <h3 className="text-sm font-semibold">
-                                            {variantType.name.en}
-                                        </h3>
-                                        <div className="space-y-1">
-                                            {variantType.variant_values.map(
-                                                (value) => (
-                                                    <div
-                                                        key={value.id}
-                                                        className="flex items-center space-x-2"
-                                                    >
-                                                        <Checkbox
-                                                            id={`mobile-filter-${value.id}`}
-                                                            checked={selectedVariantValues.includes(
-                                                                value.id,
-                                                            )}
-                                                            onCheckedChange={() =>
-                                                                handleVariantValueToggle(
-                                                                    value.id,
-                                                                )
-                                                            }
-                                                        />
-                                                        <Label
-                                                            htmlFor={`mobile-filter-${value.id}`}
-                                                            className="cursor-pointer text-sm font-normal"
-                                                        >
-                                                            {value.value.en}
-                                                        </Label>
-                                                    </div>
-                                                ),
-                                            )}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </SheetContent>
-                    </Sheet>
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        className="lg:hidden"
+                        onClick={() => setIsFilterOpen(!isFilterOpen)}
+                    >
+                        <Filter className="h-4 w-4" />
+                        {selectedVariantValues.length > 0 && (
+                            <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
+                                {selectedVariantValues.length}
+                            </span>
+                        )}
+                    </Button>
                 )}
             </div>
+
+            {/* Active Filters (Mobile & Desktop) */}
+            {selectedVariantValues.length > 0 && (
+                <div className="mb-4 flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-medium text-muted-foreground">
+                        Active Filters:
+                    </span>
+                    {selectedVariantValues.map((valueId) => {
+                        // Find the variant value details
+                        const variantValue = variantTypes
+                            .flatMap((type) => type.variant_values)
+                            .find((v) => v.id === valueId);
+
+                        if (!variantValue) return null;
+
+                        return (
+                            <Badge
+                                key={valueId}
+                                variant="secondary"
+                                className="gap-1 pr-1"
+                            >
+                                {variantValue.value.en}
+                                <button
+                                    onClick={() => handleVariantValueToggle(valueId)}
+                                    className="ml-1 rounded-full hover:bg-muted-foreground/20"
+                                >
+                                    <X className="h-3 w-3" />
+                                </button>
+                            </Badge>
+                        );
+                    })}
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setSelectedVariantValues([])}
+                        className="h-6 text-xs"
+                    >
+                        Clear All
+                    </Button>
+                </div>
+            )}
+
+            {/* Mobile Filter Section */}
+            {variantTypes && variantTypes.length > 0 && isFilterOpen && (
+                <Card className="mb-6 lg:hidden">
+                    <CardHeader className="flex flex-row items-center justify-between pb-3">
+                        <CardTitle className="text-base">Filters</CardTitle>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => setIsFilterOpen(false)}
+                        >
+                            <ChevronUp className="h-4 w-4" />
+                        </Button>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        {variantTypes.map((variantType) => (
+                            <div key={variantType.id} className="space-y-2">
+                                <h3 className="text-sm font-semibold">
+                                    {variantType.name.en}
+                                </h3>
+                                <div className="space-y-1">
+                                    {variantType.variant_values.map((value) => (
+                                        <div
+                                            key={value.id}
+                                            className="flex items-center space-x-2"
+                                        >
+                                            <Checkbox
+                                                id={`mobile-filter-${value.id}`}
+                                                checked={selectedVariantValues.includes(
+                                                    value.id,
+                                                )}
+                                                onCheckedChange={() =>
+                                                    handleVariantValueToggle(value.id)
+                                                }
+                                            />
+                                            <Label
+                                                htmlFor={`mobile-filter-${value.id}`}
+                                                className="cursor-pointer text-sm font-normal"
+                                            >
+                                                {value.value.en}
+                                            </Label>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                    </CardContent>
+                </Card>
+            )}
 
             <div className="flex gap-6">
                 {/* Desktop Variant Filters Sidebar */}
@@ -384,7 +425,6 @@ export default function ProductsPage({
                 <div className="grid flex-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {filteredProducts.map((product) => {
                         const selectedVariant = getSelectedVariant(product);
-                        const currentSelections = selectedVariants[product.id];
                         const hasVariants = product.product_variants && product.product_variants.length > 0;
 
                         // If variant is selected, show its stock and price
@@ -396,9 +436,12 @@ export default function ProductsPage({
                                   0,
                               ) ?? 0);
 
+                        const variantPrices = product.product_variants?.map(v => v.price).filter(p => p > 0) || [];
                         const displayPrice = selectedVariant
                             ? selectedVariant.price
-                            : (Math.min(...(product.product_variants?.map(v => v.price) || [0])));
+                            : variantPrices.length > 0
+                                ? Math.min(...variantPrices)
+                                : 0;
                         const cartItem = cartItems.find(
                             (item) =>
                                 item.productId === product.id &&
