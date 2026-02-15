@@ -33,15 +33,6 @@ export default function CheckoutPage() {
   const [hasLocationCoordinates, setHasLocationCoordinates] = useState(false);
   const [showPlusCodeField, setShowPlusCodeField] = useState(false);
 
-  // Debug: Check Telegram WebApp
-  const [debugInfo, setDebugInfo] = useState<string>('');
-
-  useEffect(() => {
-    const telegram = (window as any).Telegram?.WebApp;
-    const info = `WebApp: ${telegram ? 'YES' : 'NO'} | initData: ${telegram?.initData ? 'YES (' + telegram.initData.length + ' chars)' : 'NO'}`;
-    setDebugInfo(info);
-  }, []);
-
   // Format price helper
   const formatPrice = (price: number | null | undefined): string => {
     if (price === null || price === undefined || isNaN(price)) {
@@ -312,13 +303,6 @@ export default function CheckoutPage() {
             </Button>
           </div>
         </div>
-
-        {/* Debug Info */}
-        {debugInfo && (
-          <div className="mb-4 rounded-lg bg-yellow-100 p-3 text-sm text-yellow-900 dark:bg-yellow-900 dark:text-yellow-100">
-            <strong>Debug:</strong> {debugInfo}
-          </div>
-        )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <Card>
