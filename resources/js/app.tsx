@@ -9,6 +9,18 @@ import axios from 'axios';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
+// Configure axios to send cookies and CSRF token with requests
+axios.defaults.withCredentials = true;
+axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+
+// Add CSRF token to all requests
+if (typeof window !== 'undefined') {
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    if (csrfToken) {
+        axios.defaults.headers.common['X-CSRF-TOKEN'] = csrfToken;
+    }
+}
+
 // Initialize Telegram WebApp and configure axios
 if (typeof window !== 'undefined') {
     const telegram = (window as any).Telegram;
