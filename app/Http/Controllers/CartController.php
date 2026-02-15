@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\ProductVariant;
-use App\Models\User;
 use App\Settings\AppSettings;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -29,13 +28,7 @@ class CartController extends Controller
      */
     public function checkout(Request $request): Response
     {
-        $telegramUser = $request->input('telegram_user');
-        $savedPhoneNumber = null;
-
-        if ($telegramUser) {
-            $user = User::where('telegram_id', $telegramUser['id'])->first();
-            $savedPhoneNumber = $user?->phone_number;
-        }
+        $savedPhoneNumber = $request->user()?->phone_number;
 
         return Inertia::render('CheckoutPage', [
             'creditCardEnabled' => $this->settings->credit_card_enabled,
