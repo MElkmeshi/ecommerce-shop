@@ -219,7 +219,7 @@ function OrdersPage() {
                     <p className="text-sm font-medium">Phone</p>
                     <p className="text-sm text-muted-foreground">{selectedOrder.phone_number}</p>
                     <a
-                      href={`http://api.whatsapp.com/send?phone=218${selectedOrder.phone_number.substring(1)}`}
+                      href={`http://api.whatsapp.com/send?phone=218${selectedOrder.phone_number.startsWith('0') ? selectedOrder.phone_number.substring(1) : selectedOrder.phone_number}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-xs text-green-600 hover:underline"
