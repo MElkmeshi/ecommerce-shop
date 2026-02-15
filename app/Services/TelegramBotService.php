@@ -25,6 +25,10 @@ class TelegramBotService
     public function handleStart(int $chatId, array $user): void
     {
         // Create or update user in database
+        $firstName = $user['first_name'] ?? '';
+        $lastName = $user['last_name'] ?? '';
+        $username = $user['username'] ?? '';
+
         User::updateOrCreate(
             ['telegram_id' => $user['id']],
             [
@@ -32,6 +36,7 @@ class TelegramBotService
                 'last_name' => $user['last_name'] ?? null,
                 'username' => $user['username'] ?? null,
                 'language_code' => $user['language_code'] ?? 'en',
+                'name' => trim($firstName.' '.$lastName) ?: $username ?: 'Telegram User',
             ]
         );
 
