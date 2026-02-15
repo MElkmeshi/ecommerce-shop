@@ -18,11 +18,21 @@ class TelegramAuthMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
+        // If user is already authenticated via session, allow the request
+        if (Auth::check()) {
+            \Log::info('✅ TelegramAuth: User already authenticated via session', [
+                'user_id' => Auth::id(),
+                'has_initData_header' => $request->hasHeader('x-telegram-init-data'),
+            ]);
+
+            return $next($request);
+        }
+
         // Get initData from header
         $initData = $request->header('x-telegram-init-data');
 
         if (! $initData) {
-            \Log::warning('❌ TelegramAuth: Missing initData header');
+            \Log::warning('❌ TelegramAuth: Missing initData header and no session auth');
 
             return response()->json(['error' => 'Unauthorized: Missing Telegram initData'], 401);
         }
