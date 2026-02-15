@@ -38,6 +38,9 @@ Route::post('/api/cart/validate-stock', [CartController::class, 'validateStock']
 Route::middleware('telegram.auth')->group(function () {
     Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
     Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
+
+    // Payment initialization requires auth
+    Route::post('/payments/init', [PaymentController::class, 'init'])->name('payments.init');
 });
 
 // Admin Routes
@@ -100,9 +103,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
     });
 });
 
-// Payment Routes
+// Payment Routes (Public)
 Route::prefix('payments')->name('payments.')->group(function () {
-    Route::post('/init', [PaymentController::class, 'init'])->name('init');
     Route::get('/status', [PaymentController::class, 'status'])->name('status');
     Route::get('/providers', [PaymentController::class, 'providers'])->name('providers');
 
