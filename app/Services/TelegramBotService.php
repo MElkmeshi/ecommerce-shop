@@ -36,7 +36,7 @@ class TelegramBotService
                 'last_name' => $user['last_name'] ?? null,
                 'username' => $user['username'] ?? null,
                 'language_code' => $user['language_code'] ?? 'en',
-                'name' => trim($firstName.' '.$lastName) ?: $username ?: 'Telegram User',
+                'name' => trim("{$firstName} {$lastName}") ?: $username ?: 'Telegram User',
             ]
         );
 

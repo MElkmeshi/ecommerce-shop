@@ -28,12 +28,17 @@ interface Props {
     products: Product[];
     variantTypes: VariantType[];
     filters: any;
+    user?: {
+        name: string;
+        username: string | null;
+    } | null;
 }
 
 export default function ProductsPage({
     products,
     variantTypes,
     filters,
+    user,
 }: Props) {
     const [search, setSearch] = useState(filters.search || '');
     const [selectedVariantValues, setSelectedVariantValues] = useState<
@@ -238,6 +243,15 @@ export default function ProductsPage({
                     </Button>
                 </div>
             </div>
+
+            {/* User Greeting */}
+            {user && (
+                <div className="mb-6">
+                    <p className="text-lg text-muted-foreground">
+                        Hey, <span className="font-semibold text-foreground">{user.name}</span>!
+                    </p>
+                </div>
+            )}
 
             {/* Search Bar and Filter Button */}
             <div className="mb-6 flex gap-2">

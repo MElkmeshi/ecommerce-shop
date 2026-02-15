@@ -28,8 +28,13 @@ class ProductController extends Controller
 
         $products = $this->productService->getProducts($filters);
         $variantTypes = $this->variantTypeService->getAllVariantTypes();
+        $telegramUser = $request->input('telegram_user');
 
         return Inertia::render('ProductsPage', [
+            'user' => $telegramUser ? [
+                'name' => $telegramUser['first_name'] ?? $telegramUser['username'] ?? 'User',
+                'username' => $telegramUser['username'] ?? null,
+            ] : null,
             'products' => $products->map(function ($product) {
                 return [
                     'id' => $product->id,
