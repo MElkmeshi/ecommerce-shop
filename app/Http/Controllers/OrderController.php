@@ -100,16 +100,6 @@ class OrderController extends Controller
                 $calculatedTotal = $itemsTotal + ($order->delivery_fee ?? 0);
                 $totalAmount = ($order->total_amount ?? 0) > 0 ? $order->total_amount : $calculatedTotal;
 
-                \Log::info('Order Total Calculation', [
-                    'order_id' => $order->id,
-                    'items_count' => $order->items->count(),
-                    'items_total' => $itemsTotal,
-                    'delivery_fee' => $order->delivery_fee,
-                    'calculated_total' => $calculatedTotal,
-                    'db_total_amount' => $order->total_amount,
-                    'final_total' => $totalAmount,
-                ]);
-
                 return [
                     'id' => $order->id,
                     'total_amount' => (float) $totalAmount,
