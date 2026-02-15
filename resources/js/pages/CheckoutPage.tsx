@@ -51,24 +51,21 @@ export default function CheckoutPage() {
         return decodeURIComponent(plusCodeMatch[1]);
       }
 
-      // If it's a shortened link, try to resolve it
+      // If it's a shortened link, resolve it using the backend API
       if (input.includes('goo.gl') || input.includes('maps.app.goo.gl')) {
         try {
-          // Use a proxy or direct fetch to get the redirect URL
-          const response = await fetch(input, {
-            method: 'HEAD',
-            redirect: 'follow'
-          });
-          const finalUrl = response.url;
+          const response = await axios.post('/api/resolve-maps-link', { url: input });
 
-          // Try to extract Plus Code from the final URL
-          const finalPlusCodeMatch = finalUrl.match(/([23456789C][23456789CFGHJMPQRV][23456789CFGHJMPQRVWX]{6}\+[23456789CFGHJMPQRVWX]{2,3})/i);
-          if (finalPlusCodeMatch) {
-            return decodeURIComponent(finalPlusCodeMatch[1]);
+          if (response.data.success && response.data.plusCode) {
+            return response.data.plusCode;
+          } else {
+            toast.error(response.data.error || 'Could not extract Plus Code from the link');
+            return null;
           }
-        } catch (error) {
+        } catch (error: any) {
           console.error('Failed to resolve shortened URL:', error);
-          toast.error('Could not resolve shortened link. Please use the full Google Maps URL or Plus Code directly.');
+          toast.error(error.response?.data?.error || 'Could not resolve shortened link. Please use the full Google Maps URL or Plus Code directly.');
+          return null;
         }
       }
     }

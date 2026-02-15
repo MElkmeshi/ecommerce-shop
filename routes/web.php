@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\StockManagementController as AdminStockManagement
 use App\Http\Controllers\Admin\VariantTypeController as AdminVariantTypeController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\GoogleMapsController;
 use App\Http\Controllers\MoamalatPageController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PaymentController;
@@ -33,6 +34,7 @@ Route::get('/api/products/{id}/variants', [ProductController::class, 'getVariant
 Route::post('/api/calculate-delivery-fee', [OrderController::class, 'calculateDeliveryFee'])->name('api.calculate-delivery-fee');
 Route::post('/api/calculate-delivery-fee-pluscode', [OrderController::class, 'calculateDeliveryFeeFromPlusCode'])->name('api.calculate-delivery-fee-pluscode');
 Route::post('/api/cart/validate-stock', [CartController::class, 'validateStock'])->name('api.cart.validate-stock');
+Route::post('/api/resolve-maps-link', [GoogleMapsController::class, 'resolveShortenedLink'])->name('api.resolve-maps-link');
 
 // Telegram Authenticated Routes
 Route::middleware('telegram.auth')->group(function () {
