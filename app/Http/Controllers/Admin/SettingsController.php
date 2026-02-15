@@ -38,6 +38,7 @@ class SettingsController extends Controller
                 'max_delivery_distance_km' => $this->settings->max_delivery_distance_km,
 
                 // Payment Settings
+                'credit_card_enabled' => $this->settings->credit_card_enabled,
                 'credit_card_charge_percentage' => $this->settings->credit_card_charge_percentage,
 
                 // Store Location
@@ -72,6 +73,7 @@ class SettingsController extends Controller
                 'delivery_distance_threshold_km' => $this->settings->delivery_distance_threshold_km,
                 'extra_fee_per_km' => $this->settings->extra_fee_per_km,
                 'max_delivery_distance_km' => $this->settings->max_delivery_distance_km,
+                'credit_card_enabled' => $this->settings->credit_card_enabled,
                 'credit_card_charge_percentage' => $this->settings->credit_card_charge_percentage,
                 'store_latitude' => $this->settings->store_latitude,
                 'store_longitude' => $this->settings->store_longitude,

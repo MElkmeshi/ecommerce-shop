@@ -29,6 +29,7 @@ class UpdateSettingsRequest extends FormRequest
             'max_delivery_distance_km' => 'sometimes|numeric|min:0',
 
             // Payment Settings
+            'credit_card_enabled' => 'sometimes|boolean',
             'credit_card_charge_percentage' => 'sometimes|numeric|min:0|max:100',
 
             // Store Location
@@ -52,6 +53,7 @@ class UpdateSettingsRequest extends FormRequest
             'delivery_distance_threshold_km' => 'delivery distance threshold',
             'extra_fee_per_km' => 'extra fee per kilometer',
             'max_delivery_distance_km' => 'maximum delivery distance',
+            'credit_card_enabled' => 'credit card payment enabled',
             'credit_card_charge_percentage' => 'credit card charge percentage',
             'store_latitude' => 'store latitude',
             'store_longitude' => 'store longitude',

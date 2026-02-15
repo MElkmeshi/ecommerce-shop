@@ -17,7 +17,11 @@ import axios from 'axios';
 import { MapPin, Calculator, Home, Package } from 'lucide-react';
 import { locationManager } from '@tma.js/sdk';
 
-export default function CheckoutPage() {
+interface CheckoutPageProps {
+    creditCardEnabled: boolean;
+}
+
+export default function CheckoutPage({ creditCardEnabled = false }: CheckoutPageProps) {
     const items = useCartStore((state) => state.items);
     const getTotalPrice = useCartStore((state) => state.getTotalPrice);
     const clearCart = useCartStore((state) => state.clearCart);
@@ -555,18 +559,20 @@ export default function CheckoutPage() {
                                         Cash on Delivery
                                     </Label>
                                 </div>
-                                <div className="flex items-center space-x-2">
-                                    <RadioGroupItem
-                                        value="credit_card"
-                                        id="credit_card"
-                                    />
-                                    <Label
-                                        htmlFor="credit_card"
-                                        className="cursor-pointer"
-                                    >
-                                        Credit Card (+2.5% fee)
-                                    </Label>
-                                </div>
+                                {creditCardEnabled && (
+                                    <div className="flex items-center space-x-2">
+                                        <RadioGroupItem
+                                            value="credit_card"
+                                            id="credit_card"
+                                        />
+                                        <Label
+                                            htmlFor="credit_card"
+                                            className="cursor-pointer"
+                                        >
+                                            Credit Card (+2.5% fee)
+                                        </Label>
+                                    </div>
+                                )}
                             </RadioGroup>
                         </CardContent>
                     </Card>

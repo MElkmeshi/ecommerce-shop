@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import axios from 'axios';
@@ -14,6 +15,7 @@ interface Settings {
     delivery_distance_threshold_km: number;
     extra_fee_per_km: number;
     max_delivery_distance_km: number;
+    credit_card_enabled: boolean;
     credit_card_charge_percentage: number;
     store_latitude: number;
     store_longitude: number;
@@ -26,6 +28,7 @@ function AdminSettingsPage() {
         delivery_distance_threshold_km: 0,
         extra_fee_per_km: 0,
         max_delivery_distance_km: 0,
+        credit_card_enabled: false,
         credit_card_charge_percentage: 0,
         store_latitude: 0,
         store_longitude: 0,
@@ -49,10 +52,15 @@ function AdminSettingsPage() {
         }
     };
 
-    const handleChange = (field: keyof Settings, value: string) => {
+    const handleChange = (field: keyof Settings, value: string | boolean) => {
         setSettings((prev) => ({
             ...prev,
-            [field]: field === 'google_maps_api_key' ? value : parseFloat(value) || 0,
+            [field]:
+                typeof value === 'boolean'
+                    ? value
+                    : field === 'google_maps_api_key'
+                    ? value
+                    : parseFloat(value as string) || 0,
         }));
     };
 
@@ -169,22 +177,45 @@ function AdminSettingsPage() {
                             <CardDescription>Configure payment method fees</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="credit_card_charge_percentage">Credit Card Fee (%)</Label>
-                                    <Input
-                                        id="credit_card_charge_percentage"
-                                        type="number"
-                                        step="0.1"
-                                        min="0"
-                                        max="100"
-                                        value={settings.credit_card_charge_percentage}
-                                        onChange={(e) => handleChange('credit_card_charge_percentage', e.target.value)}
-                                        placeholder="2.5"
-                                    />
-                                    <p className="text-sm text-muted-foreground">Additional charge for credit card payments</p>
+                            <div className="flex items-center space-x-2">
+                                <Checkbox
+                                    id="credit_card_enabled"
+                                    checked={settings.credit_card_enabled}
+                                    onCheckedChange={(checked) =>
+                                        handleChange('credit_card_enabled', checked === true)
+                                    }
+                                />
+                                <div className="grid gap-1.5 leading-none">
+                                    <Label
+                                        htmlFor="credit_card_enabled"
+                                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                    >
+                                        Enable Credit Card Payments
+                                    </Label>
+                                    <p className="text-sm text-muted-foreground">
+                                        Allow customers to pay with credit cards via Moamalat
+                                    </p>
                                 </div>
                             </div>
+
+                            {settings.credit_card_enabled && (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="credit_card_charge_percentage">Credit Card Fee (%)</Label>
+                                        <Input
+                                            id="credit_card_charge_percentage"
+                                            type="number"
+                                            step="0.1"
+                                            min="0"
+                                            max="100"
+                                            value={settings.credit_card_charge_percentage}
+                                            onChange={(e) => handleChange('credit_card_charge_percentage', e.target.value)}
+                                            placeholder="2.5"
+                                        />
+                                        <p className="text-sm text-muted-foreground">Additional charge for credit card payments</p>
+                                    </div>
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
 

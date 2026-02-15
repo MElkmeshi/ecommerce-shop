@@ -16,6 +16,8 @@ class AppSettings extends Settings
     public float $max_delivery_distance_km;
 
     // Payment Settings
+    public bool $credit_card_enabled;
+
     public float $credit_card_charge_percentage;
 
     // Store Location

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ProductVariant;
+use App\Settings\AppSettings;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -10,6 +11,10 @@ use Inertia\Response;
 
 class CartController extends Controller
 {
+    public function __construct(
+        private readonly AppSettings $settings
+    ) {}
+
     /**
      * Display the cart page.
      */
@@ -23,7 +28,9 @@ class CartController extends Controller
      */
     public function checkout(): Response
     {
-        return Inertia::render('CheckoutPage');
+        return Inertia::render('CheckoutPage', [
+            'creditCardEnabled' => $this->settings->credit_card_enabled,
+        ]);
     }
 
     /**
