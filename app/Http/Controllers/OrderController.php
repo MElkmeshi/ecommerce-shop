@@ -106,10 +106,10 @@ class OrderController extends Controller
                     'items' => $order->items->map(function ($item) {
                         return [
                             'id' => $item->id,
-                            'product_name' => $item->product->name,
-                            'quantity' => $item->quantity,
-                            'price' => $item->price,
-                            'subtotal' => $item->subtotal,
+                            'product_name' => $item->product->name ?? 'Unknown Product',
+                            'quantity' => $item->quantity ?? 0,
+                            'price' => $item->price ?? 0,
+                            'subtotal' => $item->subtotal ?? 0,
                         ];
                     }),
                 ];
