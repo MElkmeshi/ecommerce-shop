@@ -234,11 +234,27 @@ function OrdersPage() {
                   <div className="col-span-2">
                     <p className="text-sm font-medium">Location</p>
                     <p className="text-sm text-muted-foreground">
-                      {selectedOrder.location?.address ||
-                        selectedOrder.location?.plusCode ||
-                        (selectedOrder.location?.latitude && selectedOrder.location?.longitude
-                          ? `Lat: ${selectedOrder.location.latitude}, Lng: ${selectedOrder.location.longitude}`
-                          : 'No location provided')}
+                      {selectedOrder.location?.latitude && selectedOrder.location?.longitude ? (
+                        <>
+                          <a
+                            href={`https://www.google.com/maps?q=${selectedOrder.location.latitude},${selectedOrder.location.longitude}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:underline"
+                          >
+                            View on Google Maps
+                          </a>
+                          <span className="ml-2 text-xs">
+                            ({selectedOrder.location.latitude.toFixed(6)}, {selectedOrder.location.longitude.toFixed(6)})
+                          </span>
+                        </>
+                      ) : selectedOrder.location?.plusCode ? (
+                        <span>{selectedOrder.location.plusCode}</span>
+                      ) : selectedOrder.location?.address ? (
+                        <span>{selectedOrder.location.address}</span>
+                      ) : (
+                        'No location provided'
+                      )}
                     </p>
                   </div>
                   <div className="col-span-2">

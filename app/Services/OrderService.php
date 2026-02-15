@@ -80,30 +80,27 @@ class OrderService
                 $totalAmount += $variant->price * $item['quantity'];
             }
 
+            // Convert Plus Code to coordinates if provided
+            $location = $data['location'];
+            if (! empty($location['plusCode']) && empty($location['latitude'])) {
+                $coordinates = $this->mapsService->geocodePlusCode($location['plusCode']);
+                if ($coordinates) {
+                    $location['latitude'] = $coordinates['lat'];
+                    $location['longitude'] = $coordinates['lng'];
+                }
+            }
+
             // Calculate delivery fee
             $deliveryFee = 0;
             $deliveryDistance = null;
 
-            if (! empty($data['location']['plusCode'])) {
-                // Calculate from Plus Code
-                $distance = $this->mapsService->calculateDistanceFromPlusCode(
-                    $data['location']['plusCode'],
-                    $this->settings->store_latitude,
-                    $this->settings->store_longitude
-                );
-
-                if ($distance !== null) {
-                    $deliveryDistance = $distance;
-                    $feeData = $this->feeCalculator->calculate($distance);
-                    $deliveryFee = $feeData['fee'];
-                }
-            } elseif (isset($data['location']['latitude']) && isset($data['location']['longitude'])) {
+            if (isset($location['latitude']) && isset($location['longitude'])) {
                 // Calculate from coordinates
                 $distance = $this->mapsService->calculateDistance(
                     $this->settings->store_latitude,
                     $this->settings->store_longitude,
-                    $data['location']['latitude'],
-                    $data['location']['longitude']
+                    $location['latitude'],
+                    $location['longitude']
                 );
 
                 if ($distance !== null) {
@@ -131,7 +128,7 @@ class OrderService
             $order = Order::create([
                 'user_id' => $user->id,
                 'phone_number' => $data['phoneNumber'],
-                'location' => $data['location'],
+                'location' => $location,
                 'total_amount' => $totalAmount,
                 'delivery_fee' => $deliveryFee,
                 'delivery_distance' => $deliveryDistance,
