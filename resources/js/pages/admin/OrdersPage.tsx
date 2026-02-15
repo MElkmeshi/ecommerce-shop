@@ -45,6 +45,8 @@ function OrdersPage() {
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [isImageOpen, setIsImageOpen] = useState(false);
 
   // Format price helper
   const formatPrice = (price: number | string | null | undefined): string => {
@@ -88,6 +90,11 @@ function OrdersPage() {
   const openDetailDialog = (order: Order) => {
     setSelectedOrder(order);
     setIsDetailOpen(true);
+  };
+
+  const openImageDialog = (imageUrl: string) => {
+    setSelectedImage(imageUrl);
+    setIsImageOpen(true);
   };
 
   const getStatusColor = (status: string) => {
@@ -202,6 +209,24 @@ function OrdersPage() {
           </CardContent>
         </Card>
 
+        {/* Image Fullscreen Dialog */}
+        <Dialog open={isImageOpen} onOpenChange={setIsImageOpen}>
+          <DialogContent className="max-w-4xl">
+            <DialogHeader>
+              <DialogTitle>Product Image</DialogTitle>
+            </DialogHeader>
+            {selectedImage && (
+              <div className="flex items-center justify-center">
+                <img
+                  src={selectedImage}
+                  alt="Product"
+                  className="max-h-[80vh] w-auto object-contain rounded-lg"
+                />
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
         {/* Order Detail Dialog */}
         <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
           <DialogContent className="max-w-2xl">
@@ -295,7 +320,8 @@ function OrdersPage() {
                                 <img
                                   src={item.product_image}
                                   alt={item.product_name?.en || 'Product'}
-                                  className="h-12 w-12 object-cover rounded"
+                                  className="h-12 w-12 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
+                                  onClick={() => openImageDialog(item.product_image!)}
                                 />
                               ) : (
                                 <div className="h-12 w-12 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">

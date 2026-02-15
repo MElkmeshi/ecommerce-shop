@@ -21,7 +21,7 @@ class OrderController extends Controller
      */
     public function apiIndex(): JsonResponse
     {
-        $orders = Order::with(['user', 'items.product.category'])
+        $orders = Order::with(['user', 'items.product.category', 'items.productVariant.variantValues.variantType'])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -35,11 +35,19 @@ class OrderController extends Controller
                 'status' => $order->status,
                 'created_at' => $order->created_at->toIso8601String(),
                 'items' => $order->items->map(function ($item) {
+                    $productName = $item->product ? [
+                        'en' => $item->product->getTranslation('name', 'en'),
+                        'ar' => $item->product->getTranslation('name', 'ar'),
+                    ] : ['en' => 'Unknown Product', 'ar' => 'منتج غير معروف'];
+
+                    // Add variant display name if exists
+                    if ($item->productVariant && $item->productVariant->display_name) {
+                        $productName['en'] .= ' ('.$item->productVariant->display_name.')';
+                        $productName['ar'] .= ' ('.$item->productVariant->display_name.')';
+                    }
+
                     return [
-                        'product_name' => $item->product ? [
-                            'en' => $item->product->getTranslation('name', 'en'),
-                            'ar' => $item->product->getTranslation('name', 'ar'),
-                        ] : ['en' => 'Unknown Product', 'ar' => 'منتج غير معروف'],
+                        'product_name' => $productName,
                         'product_image' => $item->product?->getFirstMediaUrl('product_images', 'thumb'),
                         'quantity' => (int) ($item->quantity ?? 0),
                         'price' => (float) ($item->price ?? 0),
