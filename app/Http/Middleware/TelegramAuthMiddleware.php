@@ -18,50 +18,32 @@ class TelegramAuthMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // Development bypass - automatically create test user in local environment
-        if (app()->environment('local')) {
-            // Auto-authenticate with test Telegram user (no initData required)
-            $mockUserData = [
-                'id' => 999999,
-                'first_name' => 'Test',
-                'last_name' => 'User',
-                'username' => 'testuser',
-                'language_code' => 'en',
-            ];
-
-            $user = User::updateOrCreate(
-                ['telegram_id' => $mockUserData['id']],
-                [
-                    'name' => trim("{$mockUserData['first_name']} {$mockUserData['last_name']}"),
-                    'first_name' => $mockUserData['first_name'],
-                    'last_name' => $mockUserData['last_name'],
-                    'username' => $mockUserData['username'],
-                    'language_code' => $mockUserData['language_code'],
-                ]
-            );
-
-            App::setLocale($user->getPreferredLocale());
-            Auth::login($user);
-            $request->merge(['telegram_user' => $mockUserData]);
-
-            return $next($request);
-        }
-
         // Get initData from header
         $initData = $request->header('x-telegram-init-data');
 
         if (! $initData) {
+            \Log::warning('❌ TelegramAuth: Missing initData header');
+
             return response()->json(['error' => 'Unauthorized: Missing Telegram initData'], 401);
         }
+
+        \Log::info('📥 TelegramAuth: Received initData', [
+            'preview' => substr($initData, 0, 100).'...',
+            'length' => strlen($initData),
+        ]);
 
         $botToken = config('services.telegram.bot_token');
 
         if (! $botToken) {
+            \Log::error('❌ TelegramAuth: Bot token not configured');
+
             return response()->json(['error' => 'Server configuration error'], 500);
         }
 
         // Verify the initData signature
         if (! $this->verifyTelegramInitData($initData, $botToken)) {
+            \Log::warning('❌ TelegramAuth: Invalid signature');
+
             return response()->json(['error' => 'Unauthorized: Invalid Telegram signature'], 401);
         }
 
@@ -69,6 +51,8 @@ class TelegramAuthMiddleware
         $telegramUser = $this->parseTelegramUser($initData);
 
         if (! $telegramUser) {
+            \Log::warning('❌ TelegramAuth: Failed to parse user data from initData');
+
             return response()->json(['error' => 'Unauthorized: Invalid user data'], 401);
         }
 
@@ -77,10 +61,17 @@ class TelegramAuthMiddleware
         $lastName = $telegramUser['last_name'] ?? '';
         $username = $telegramUser['username'] ?? '';
 
+        \Log::info('✅ TelegramAuth: Authenticated real Telegram user', [
+            'telegram_id' => $telegramUser['id'],
+            'first_name' => $firstName,
+            'last_name' => $lastName,
+            'username' => $username,
+        ]);
+
         $user = User::updateOrCreate(
             ['telegram_id' => $telegramUser['id']],
             [
-                'name' => trim($firstName.' '.$lastName) ?: $username ?: 'Telegram User',
+                'name' => trim("{$firstName} {$lastName}") ?: $username ?: 'Telegram User',
                 'first_name' => $firstName ?: null,
                 'last_name' => $lastName ?: null,
                 'username' => $username ?: null,

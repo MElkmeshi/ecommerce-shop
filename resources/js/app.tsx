@@ -12,6 +12,16 @@ const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 // Initialize Telegram WebApp and configure axios
 if (typeof window !== 'undefined') {
     const telegram = (window as any).Telegram;
+
+    console.log('🔍 Telegram WebApp Debug:', {
+        exists: !!telegram?.WebApp,
+        initData: telegram?.WebApp?.initData || 'NONE',
+        initDataUnsafe: telegram?.WebApp?.initDataUnsafe || 'NONE',
+        user: telegram?.WebApp?.initDataUnsafe?.user || 'NONE',
+        platform: telegram?.WebApp?.platform || 'NONE',
+        version: telegram?.WebApp?.version || 'NONE',
+    });
+
     if (telegram?.WebApp) {
         telegram.WebApp.ready();
         telegram.WebApp.expand();
@@ -19,26 +29,20 @@ if (typeof window !== 'undefined') {
         // Add axios interceptor to include Telegram initData in all requests
         axios.interceptors.request.use((config) => {
             const initData = telegram.WebApp.initData;
+
+            console.log('📡 Axios Request:', {
+                url: config.url,
+                hasInitData: !!initData,
+                initDataPreview: initData ? initData.substring(0, 50) + '...' : 'NONE',
+            });
+
             if (initData) {
                 config.headers['x-telegram-init-data'] = initData;
             }
             return config;
         });
     } else {
-        // For local development without Telegram
-        axios.interceptors.request.use((config) => {
-            // Only add mock header for local development
-            if (window.location.hostname === 'localhost' || window.location.hostname.endsWith('.test')) {
-                config.headers['X-Mock-Telegram-User'] = JSON.stringify({
-                    id: 999999,
-                    first_name: 'Test',
-                    last_name: 'User',
-                    username: 'testuser',
-                    language_code: 'en',
-                });
-            }
-            return config;
-        });
+        console.warn('⚠️ Telegram WebApp not available - running in browser without Telegram');
     }
 }
 

@@ -238,25 +238,7 @@ export default function CheckoutPage() {
     setLoading(true);
 
     try {
-      // Get Telegram WebApp initData
-      const initData = (window as any).Telegram?.WebApp?.initData || '';
-
-      // Prepare headers
-      const headers: Record<string, string> = {};
-
-      if (initData) {
-        headers['x-telegram-init-data'] = initData;
-      } else {
-        // For local development without Telegram, use mock header
-        headers['X-Mock-Telegram-User'] = JSON.stringify({
-          id: 999999,
-          first_name: 'Test',
-          last_name: 'User',
-          username: 'testuser',
-          language_code: 'en',
-        });
-      }
-
+      // Axios interceptor will automatically add x-telegram-init-data header
       const response = await axios.post('/orders', {
         phoneNumber,
         location: {
@@ -271,8 +253,6 @@ export default function CheckoutPage() {
           productVariantId: item.productVariantId,
           quantity: item.quantity,
         })),
-      }, {
-        headers,
       });
 
       if (response.data.success) {
