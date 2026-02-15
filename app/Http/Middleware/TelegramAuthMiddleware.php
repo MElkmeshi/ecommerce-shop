@@ -18,63 +18,33 @@ class TelegramAuthMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // Development bypass for local testing
+        // Development bypass - automatically create test user in local environment
         if (app()->environment('local')) {
-            // Query parameter bypass (for easy browser testing)
-            if ($request->has('mock_auth')) {
-                $userId = $request->query('mock_user_id', 999999);
-                $mockUserData = [
-                    'id' => $userId,
-                    'first_name' => 'Test',
-                    'last_name' => 'User',
-                    'username' => 'testuser',
-                    'language_code' => 'en',
-                ];
+            // Auto-authenticate with test Telegram user (no initData required)
+            $mockUserData = [
+                'id' => 999999,
+                'first_name' => 'Test',
+                'last_name' => 'User',
+                'username' => 'testuser',
+                'language_code' => 'en',
+            ];
 
-                $user = User::updateOrCreate(
-                    ['telegram_id' => $mockUserData['id']],
-                    [
-                        'name' => $mockUserData['first_name'].' '.$mockUserData['last_name'],
-                        'first_name' => $mockUserData['first_name'],
-                        'last_name' => $mockUserData['last_name'],
-                        'username' => $mockUserData['username'],
-                        'language_code' => $mockUserData['language_code'],
-                    ]
-                );
+            $user = User::updateOrCreate(
+                ['telegram_id' => $mockUserData['id']],
+                [
+                    'name' => trim("{$mockUserData['first_name']} {$mockUserData['last_name']}"),
+                    'first_name' => $mockUserData['first_name'],
+                    'last_name' => $mockUserData['last_name'],
+                    'username' => $mockUserData['username'],
+                    'language_code' => $mockUserData['language_code'],
+                ]
+            );
 
-                App::setLocale($user->getPreferredLocale());
-                Auth::login($user);
-                $request->merge(['telegram_user' => $mockUserData]);
+            App::setLocale($user->getPreferredLocale());
+            Auth::login($user);
+            $request->merge(['telegram_user' => $mockUserData]);
 
-                return $next($request);
-            }
-
-            // Header bypass (for API testing)
-            if ($request->header('X-Mock-Telegram-User')) {
-                $mockUserData = json_decode($request->header('X-Mock-Telegram-User'), true);
-
-                if ($mockUserData && isset($mockUserData['id'])) {
-                    $firstName = $mockUserData['first_name'] ?? 'Test';
-                    $lastName = $mockUserData['last_name'] ?? 'User';
-
-                    $user = User::updateOrCreate(
-                        ['telegram_id' => $mockUserData['id']],
-                        [
-                            'name' => trim($firstName.' '.$lastName),
-                            'first_name' => $firstName,
-                            'last_name' => $lastName,
-                            'username' => $mockUserData['username'] ?? 'testuser',
-                            'language_code' => $mockUserData['language_code'] ?? 'en',
-                        ]
-                    );
-
-                    App::setLocale($user->getPreferredLocale());
-                    Auth::login($user);
-                    $request->merge(['telegram_user' => $mockUserData]);
-
-                    return $next($request);
-                }
-            }
+            return $next($request);
         }
 
         // Get initData from header
