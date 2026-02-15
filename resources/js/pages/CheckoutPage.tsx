@@ -48,6 +48,7 @@ export default function CheckoutPage({
     const [calculatingFee, setCalculatingFee] = useState(false);
     const [hasLocationCoordinates, setHasLocationCoordinates] = useState(false);
     const [showPlusCodeField, setShowPlusCodeField] = useState(false);
+    const [processingLink, setProcessingLink] = useState(false);
 
     // Format price helper
     const formatPrice = (price: number | null | undefined): string => {
@@ -121,10 +122,15 @@ export default function CheckoutPage({
 
         // Check if it's a Google Maps link
         if (value.includes('maps.google.com') || value.includes('goo.gl')) {
-            const extracted = await extractPlusCodeFromLink(value);
-            if (extracted) {
-                setPlusCode(extracted);
-                toast.success(`Plus Code extracted: ${extracted}`);
+            setProcessingLink(true);
+            try {
+                const extracted = await extractPlusCodeFromLink(value);
+                if (extracted) {
+                    setPlusCode(extracted);
+                    toast.success(`Plus Code extracted: ${extracted}`);
+                }
+            } finally {
+                setProcessingLink(false);
             }
         }
     };
@@ -504,20 +510,29 @@ export default function CheckoutPage({
                                                 )
                                             }
                                             className="flex-1"
+                                            disabled={processingLink || calculatingFee}
                                         />
                                         <Button
                                             type="button"
                                             variant="outline"
                                             onClick={calculateFromPlusCode}
-                                            disabled={calculatingFee}
+                                            disabled={processingLink || calculatingFee}
                                         >
                                             <Calculator className="h-4 w-4" />
                                         </Button>
                                     </div>
                                     <p className="text-xs text-muted-foreground">
-                                        Enter Plus Code (e.g., 8G6X+XX Tripoli)
-                                        or paste a Google Maps link. Click
-                                        calculator to get delivery fee.
+                                        {processingLink ? (
+                                            <span className="font-medium text-primary">
+                                                Processing Google Maps link...
+                                            </span>
+                                        ) : (
+                                            <>
+                                                Enter Plus Code (e.g., 8G6X+XX Tripoli)
+                                                or paste a Google Maps link. Click
+                                                calculator to get delivery fee.
+                                            </>
+                                        )}
                                     </p>
                                 </div>
                             )}
@@ -638,9 +653,12 @@ export default function CheckoutPage({
                                 type="submit"
                                 className="w-full"
                                 size="lg"
-                                disabled={loading}
+                                disabled={loading || processingLink || calculatingFee}
                             >
-                                {loading ? 'Placing Order...' : 'Place Order'}
+                                {loading ? 'Placing Order...' :
+                                 processingLink ? 'Processing location...' :
+                                 calculatingFee ? 'Calculating fee...' :
+                                 'Place Order'}
                             </Button>
                         </CardFooter>
                     </Card>
