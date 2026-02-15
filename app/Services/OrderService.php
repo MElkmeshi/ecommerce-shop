@@ -36,6 +36,7 @@ class OrderService
                     'last_name' => $telegramUser['last_name'] ?? null,
                     'username' => $telegramUser['username'] ?? null,
                     'language_code' => $telegramUser['language_code'] ?? 'en',
+                    'phone_number' => $data['phoneNumber'],
                 ]
             );
 

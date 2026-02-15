@@ -19,16 +19,18 @@ import { locationManager } from '@tma.js/sdk';
 
 interface CheckoutPageProps {
     creditCardEnabled: boolean;
+    savedPhoneNumber?: string | null;
 }
 
 export default function CheckoutPage({
     creditCardEnabled = false,
+    savedPhoneNumber = null,
 }: CheckoutPageProps) {
     const items = useCartStore((state) => state.items);
     const getTotalPrice = useCartStore((state) => state.getTotalPrice);
     const clearCart = useCartStore((state) => state.clearCart);
 
-    const [phoneNumber, setPhoneNumber] = useState('');
+    const [phoneNumber, setPhoneNumber] = useState(savedPhoneNumber || '');
     const [address, setAddress] = useState('');
     const [plusCode, setPlusCode] = useState('');
     const [paymentMethod, setPaymentMethod] = useState<'cash' | 'credit_card'>(

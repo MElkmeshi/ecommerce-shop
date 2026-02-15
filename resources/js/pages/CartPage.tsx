@@ -56,14 +56,6 @@ export default function CartPage() {
         });
 
         setStockStatus(statusMap);
-
-        // Show warning if any items are out of stock
-        const outOfStockItems = response.data.stockStatus.filter(
-          (status: StockStatus) => !status.inStock
-        );
-        if (outOfStockItems.length > 0) {
-          toast.error('Some items in your cart have insufficient stock');
-        }
       } catch (error) {
         console.error('Failed to validate stock:', error);
       } finally {
@@ -154,14 +146,21 @@ export default function CartPage() {
                     )}
                     <div className="flex flex-1 flex-col justify-between">
                       <div>
-                        <h3 className="font-semibold text-sm">{item.name}</h3>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold text-sm">{item.name}</h3>
+                          {hasStockIssue && (
+                            <Badge variant="destructive" className="text-xs">
+                              Out of Stock
+                            </Badge>
+                          )}
+                        </div>
                         {item.variantDisplay && (
                           <p className="text-xs text-muted-foreground">{item.variantDisplay}</p>
                         )}
                         {hasStockIssue && (
-                          <div className="mt-1 flex items-center gap-1 text-xs text-destructive">
+                          <div className="mt-1 flex items-center gap-1 rounded-md bg-destructive/10 px-2 py-1 text-xs font-medium text-destructive">
                             <AlertCircle className="h-3 w-3" />
-                            <span>{itemStockStatus.message}</span>
+                            <span>{itemStockStatus.message} - Requested: {item.quantity}</span>
                           </div>
                         )}
                         <p className="text-sm text-muted-foreground">
