@@ -127,9 +127,11 @@ export default function OrdersPage({ orders }: Props) {
                   </div>
                   <div className="space-y-1 text-sm text-muted-foreground">
                     <p>Phone: {order.phone_number}</p>
-                    <p>Location: {order.location.address || order.location.plusCode || `${order.location.latitude}, ${order.location.longitude}`}</p>
+                    {order.location && (
+                      <p>Location: {order.location.address || order.location.plusCode || (order.location.latitude && order.location.longitude ? `${order.location.latitude}, ${order.location.longitude}` : 'N/A')}</p>
+                    )}
                     {order.payment_method === 'credit_card' && (
-                      <p>Payment: Credit Card ({order.payment_status})</p>
+                      <p>Payment: Credit Card ({order.payment_status || 'N/A'})</p>
                     )}
                   </div>
                   {order.status === 'pending' && order.payment_method === 'credit_card' && order.payment_status === 'pending' && (

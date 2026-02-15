@@ -95,13 +95,13 @@ class OrderController extends Controller
                 return [
                     'id' => $order->id,
                     'total_amount' => $order->total_amount,
-                    'delivery_fee' => $order->delivery_fee,
+                    'delivery_fee' => $order->delivery_fee ?? 0,
                     'delivery_distance' => $order->delivery_distance,
                     'status' => $order->status,
-                    'payment_method' => $order->payment_method,
-                    'payment_status' => $order->payment_status,
+                    'payment_method' => $order->payment_method ?? 'cash',
+                    'payment_status' => $order->payment_status ?? 'N/A',
                     'phone_number' => $order->phone_number,
-                    'location' => $order->location,
+                    'location' => is_string($order->location) ? json_decode($order->location, true) : $order->location,
                     'created_at' => $order->created_at->format('Y-m-d H:i:s'),
                     'items' => $order->items->map(function ($item) {
                         return [
