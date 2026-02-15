@@ -218,6 +218,14 @@ function OrdersPage() {
                   <div>
                     <p className="text-sm font-medium">Phone</p>
                     <p className="text-sm text-muted-foreground">{selectedOrder.phone_number}</p>
+                    <a
+                      href={`http://api.whatsapp.com/send?phone=218${selectedOrder.phone_number.substring(1)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-green-600 hover:underline"
+                    >
+                      WhatsApp
+                    </a>
                   </div>
                   <div>
                     <p className="text-sm font-medium">Status</p>
