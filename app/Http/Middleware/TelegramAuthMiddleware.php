@@ -25,6 +25,16 @@ class TelegramAuthMiddleware
                 'has_initData_header' => $request->hasHeader('x-telegram-init-data'),
             ]);
 
+            // Attach telegram user data from authenticated user
+            $user = Auth::user();
+            $request->merge(['telegram_user' => [
+                'id' => $user->telegram_id,
+                'first_name' => $user->first_name,
+                'last_name' => $user->last_name,
+                'username' => $user->username,
+                'language_code' => $user->language_code,
+            ]]);
+
             return $next($request);
         }
 
