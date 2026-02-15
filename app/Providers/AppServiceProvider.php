@@ -7,6 +7,7 @@ use App\Settings\AppSettings;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -17,6 +18,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        if (app()->environment('production')) {
+            URL::forceScheme('https');
+        }
         $this->app->bind(GoogleMapsService::class, function ($app) {
             $settings = $app->make(AppSettings::class);
 
