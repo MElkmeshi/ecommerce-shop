@@ -177,23 +177,41 @@ class OrderController extends Controller
         ]);
 
         $plusCode = strtoupper(trim($request->input('plus_code')));
-        $cacheKey = "delivery_fee:pluscode:{$plusCode}";
+
+        // Convert Plus Code to coordinates first
+        $coordinates = $this->mapsService->geocodePlusCode($plusCode);
+
+        if (! $coordinates) {
+            return response()->json([
+                'error' => 'Failed to convert Plus Code to coordinates',
+            ], 400);
+        }
+
+        // Use the same calculation logic as coordinate-based fee calculation
+        $latitude = $coordinates['lat'];
+        $longitude = $coordinates['lng'];
+
+        // Round coordinates to 2 decimal places for cache key (approx 1 km precision)
+        $latRounded = round($latitude, 2);
+        $lonRounded = round($longitude, 2);
+        $cacheKey = "delivery_fee:{$latRounded}:{$lonRounded}";
 
         // Cache for 7 days
         return response()->json(
-            cache()->remember($cacheKey, now()->addDays(7), function () use ($plusCode) {
-                $distance = $this->mapsService->calculateDistanceFromPlusCode(
-                    $plusCode,
+            cache()->remember($cacheKey, now()->addDays(7), function () use ($latitude, $longitude) {
+                $distance = $this->mapsService->calculateDistance(
                     $this->settings->store_latitude,
-                    $this->settings->store_longitude
+                    $this->settings->store_longitude,
+                    $latitude,
+                    $longitude
                 );
 
                 if ($distance === null) {
                     // Don't cache errors
-                    cache()->forget("delivery_fee:pluscode:{$plusCode}");
+                    cache()->forget('delivery_fee:'.round($latitude, 2).':'.round($longitude, 2));
 
                     return [
-                        'error' => 'Failed to calculate distance from Plus Code',
+                        'error' => 'Failed to calculate distance',
                     ];
                 }
 
