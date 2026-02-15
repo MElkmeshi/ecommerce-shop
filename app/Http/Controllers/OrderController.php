@@ -112,8 +112,8 @@ class OrderController extends Controller
 
                 return [
                     'id' => $order->id,
-                    'total_amount' => $totalAmount,
-                    'delivery_fee' => $order->delivery_fee ?? 0,
+                    'total_amount' => (float) $totalAmount,
+                    'delivery_fee' => (float) ($order->delivery_fee ?? 0),
                     'delivery_distance' => $order->delivery_distance,
                     'status' => $order->status,
                     'payment_method' => $order->payment_method ?? 'cash',
@@ -125,9 +125,9 @@ class OrderController extends Controller
                         return [
                             'id' => $item->id,
                             'product_name' => $item->product->name ?? 'Unknown Product',
-                            'quantity' => $item->quantity ?? 0,
-                            'price' => $item->price ?? 0,
-                            'subtotal' => $item->subtotal ?? 0,
+                            'quantity' => (int) ($item->quantity ?? 0),
+                            'price' => (float) ($item->price ?? 0),
+                            'subtotal' => (float) ($item->subtotal ?? 0),
                         ];
                     }),
                 ];
