@@ -31,14 +31,14 @@ class OrderController extends Controller
                 'customer' => $order->user?->getFullNameAttribute() ?? 'Unknown',
                 'phone_number' => $order->phone_number,
                 'location' => $order->location,
-                'total_amount' => $order->total_amount,
+                'total_amount' => (float) ($order->total_amount ?? 0),
                 'status' => $order->status,
                 'created_at' => $order->created_at->toIso8601String(),
                 'items' => $order->items->map(function ($item) {
                     return [
                         'product_name' => $item->product->name,
-                        'quantity' => $item->quantity,
-                        'price' => $item->price,
+                        'quantity' => (int) ($item->quantity ?? 0),
+                        'price' => (float) ($item->price ?? 0),
                     ];
                 }),
             ];

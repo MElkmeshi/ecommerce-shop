@@ -45,6 +45,18 @@ function OrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
+  // Format price helper
+  const formatPrice = (price: number | string | null | undefined): string => {
+    if (price === null || price === undefined) {
+      return '0.00';
+    }
+    const numPrice = typeof price === 'string' ? parseFloat(price) : price;
+    if (isNaN(numPrice)) {
+      return '0.00';
+    }
+    return numPrice.toFixed(2);
+  };
+
   useEffect(() => {
     fetchOrders();
   }, []);
@@ -147,7 +159,7 @@ function OrdersPage() {
                         <td className="py-3">#{order.id}</td>
                         <td className="py-3">{order.customer}</td>
                         <td className="py-3">{order.phone_number}</td>
-                        <td className="py-3">{order.total_amount.toFixed(2)} LYD</td>
+                        <td className="py-3">{formatPrice(order.total_amount)} LYD</td>
                         <td className="py-3">
                           <Select
                             value={order.status}
@@ -216,7 +228,7 @@ function OrdersPage() {
                   <div>
                     <p className="text-sm font-medium">Total Amount</p>
                     <p className="text-sm text-muted-foreground">
-                      {selectedOrder.total_amount.toFixed(2)} LYD
+                      {formatPrice(selectedOrder.total_amount)} LYD
                     </p>
                   </div>
                   <div className="col-span-2">
@@ -253,9 +265,9 @@ function OrdersPage() {
                               {item.product_name?.en || 'Unknown Product'}
                             </td>
                             <td className="p-3 text-sm">{item.quantity}</td>
-                            <td className="p-3 text-sm">{item.price.toFixed(2)} LYD</td>
+                            <td className="p-3 text-sm">{formatPrice(item.price)} LYD</td>
                             <td className="p-3 text-sm">
-                              {(item.quantity * item.price).toFixed(2)} LYD
+                              {formatPrice(item.quantity * item.price)} LYD
                             </td>
                           </tr>
                         ))}
