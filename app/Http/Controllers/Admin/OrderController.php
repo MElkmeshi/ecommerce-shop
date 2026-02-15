@@ -36,7 +36,10 @@ class OrderController extends Controller
                 'created_at' => $order->created_at->toIso8601String(),
                 'items' => $order->items->map(function ($item) {
                     return [
-                        'product_name' => $item->product->name,
+                        'product_name' => $item->product ? [
+                            'en' => $item->product->getTranslation('name', 'en'),
+                            'ar' => $item->product->getTranslation('name', 'ar'),
+                        ] : ['en' => 'Unknown Product', 'ar' => 'منتج غير معروف'],
                         'quantity' => (int) ($item->quantity ?? 0),
                         'price' => (float) ($item->price ?? 0),
                     ];

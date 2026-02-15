@@ -235,7 +235,10 @@ function OrdersPage() {
                     <p className="text-sm font-medium">Location</p>
                     <p className="text-sm text-muted-foreground">
                       {selectedOrder.location?.address ||
-                        `Lat: ${selectedOrder.location?.latitude}, Lng: ${selectedOrder.location?.longitude}`}
+                        selectedOrder.location?.plusCode ||
+                        (selectedOrder.location?.latitude && selectedOrder.location?.longitude
+                          ? `Lat: ${selectedOrder.location.latitude}, Lng: ${selectedOrder.location.longitude}`
+                          : 'No location provided')}
                     </p>
                   </div>
                   <div className="col-span-2">
