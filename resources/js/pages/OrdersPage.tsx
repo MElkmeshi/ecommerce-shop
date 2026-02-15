@@ -2,13 +2,18 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { Order } from '@/types/ecommerce';
-import { Package, Home, ShoppingCart } from 'lucide-react';
+import { Package, Home, ShoppingCart, CreditCard } from 'lucide-react';
+import { useState } from 'react';
+import axios from 'axios';
+import { toast } from 'sonner';
 
 interface Props {
   orders: Order[];
 }
 
 export default function OrdersPage({ orders }: Props) {
+  const [payingOrderId, setPayingOrderId] = useState<number | null>(null);
+
   const getStatusVariant = (status: string): 'default' | 'secondary' | 'destructive' => {
     switch (status) {
       case 'completed':
@@ -25,6 +30,27 @@ export default function OrdersPage({ orders }: Props) {
 
   const formatPrice = (price: number): string => {
     return price % 1 === 0 ? price.toString() : price.toFixed(2);
+  };
+
+  const handlePayNow = async (orderId: number) => {
+    setPayingOrderId(orderId);
+    try {
+      const response = await axios.post('/payments/init', {
+        order_id: orderId,
+        provider: 'moamalat',
+      });
+
+      if (response.data.success && response.data.redirect_url) {
+        // Redirect to payment page
+        window.location.href = response.data.redirect_url;
+      } else {
+        toast.error('Failed to initialize payment');
+        setPayingOrderId(null);
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to initialize payment');
+      setPayingOrderId(null);
+    }
   };
 
   return (
@@ -106,6 +132,16 @@ export default function OrdersPage({ orders }: Props) {
                       <p>Payment: Credit Card ({order.payment_status})</p>
                     )}
                   </div>
+                  {order.status === 'pending' && order.payment_method === 'credit_card' && order.payment_status === 'pending' && (
+                    <Button
+                      onClick={() => handlePayNow(order.id)}
+                      disabled={payingOrderId === order.id}
+                      className="w-full"
+                    >
+                      <CreditCard className="mr-2 h-4 w-4" />
+                      {payingOrderId === order.id ? 'Processing...' : 'Pay Now'}
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
             ))}
