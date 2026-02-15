@@ -93,8 +93,12 @@ class OrderController extends Controller
         return Inertia::render('OrdersPage', [
             'orders' => $orders->map(function ($order) {
                 // Calculate total from items if total_amount is 0 or null
-                $calculatedTotal = $order->items->sum('subtotal') + ($order->delivery_fee ?? 0);
-                $totalAmount = $order->total_amount > 0 ? $order->total_amount : $calculatedTotal;
+                $itemsTotal = 0;
+                foreach ($order->items as $item) {
+                    $itemsTotal += $item->subtotal ?? 0;
+                }
+                $calculatedTotal = $itemsTotal + ($order->delivery_fee ?? 0);
+                $totalAmount = ($order->total_amount ?? 0) > 0 ? $order->total_amount : $calculatedTotal;
 
                 return [
                     'id' => $order->id,
