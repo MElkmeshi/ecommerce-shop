@@ -41,30 +41,50 @@ export default function CheckoutPage() {
     return price % 1 === 0 ? price.toString() : price.toFixed(2);
   };
 
-  // Extract Plus Code from Google Maps link
-  const extractPlusCodeFromLink = (input: string): string | null => {
-    // Check if input is a Google Maps link
-    if (input.includes('maps.google.com') || input.includes('goo.gl/maps')) {
-      // Try to extract Plus Code from various Google Maps URL formats
-      // Format 1: https://maps.google.com/?q=8G6X%2BXX
-      // Format 2: https://goo.gl/maps/xyz (would need to follow redirect)
-      // Format 3: https://www.google.com/maps/place/8G6X%2BXX
+  // Extract Plus Code from Google Maps link or resolve shortened URL
+  const extractPlusCodeFromLink = async (input: string): Promise<string | null> => {
+    // Check if input looks like a Google Maps link
+    if (input.includes('maps.google.com') || input.includes('maps.app.goo.gl') || input.includes('goo.gl')) {
+      // First, try to extract Plus Code directly from URL
       const plusCodeMatch = input.match(/([23456789C][23456789CFGHJMPQRV][23456789CFGHJMPQRVWX]{6}\+[23456789CFGHJMPQRVWX]{2,3})/i);
       if (plusCodeMatch) {
         return decodeURIComponent(plusCodeMatch[1]);
+      }
+
+      // If it's a shortened link, try to resolve it
+      if (input.includes('goo.gl') || input.includes('maps.app.goo.gl')) {
+        try {
+          // Use a proxy or direct fetch to get the redirect URL
+          const response = await fetch(input, {
+            method: 'HEAD',
+            redirect: 'follow'
+          });
+          const finalUrl = response.url;
+
+          // Try to extract Plus Code from the final URL
+          const finalPlusCodeMatch = finalUrl.match(/([23456789C][23456789CFGHJMPQRV][23456789CFGHJMPQRVWX]{6}\+[23456789CFGHJMPQRVWX]{2,3})/i);
+          if (finalPlusCodeMatch) {
+            return decodeURIComponent(finalPlusCodeMatch[1]);
+          }
+        } catch (error) {
+          console.error('Failed to resolve shortened URL:', error);
+          toast.error('Could not resolve shortened link. Please use the full Google Maps URL or Plus Code directly.');
+        }
       }
     }
     return null;
   };
 
-  const handlePlusCodeChange = (value: string) => {
+  const handlePlusCodeChange = async (value: string) => {
+    setPlusCode(value);
+
     // Check if it's a Google Maps link
-    const extracted = extractPlusCodeFromLink(value);
-    if (extracted) {
-      setPlusCode(extracted);
-      toast.success(`Plus Code extracted: ${extracted}`);
-    } else {
-      setPlusCode(value);
+    if (value.includes('maps.google.com') || value.includes('goo.gl')) {
+      const extracted = await extractPlusCodeFromLink(value);
+      if (extracted) {
+        setPlusCode(extracted);
+        toast.success(`Plus Code extracted: ${extracted}`);
+      }
     }
   };
 
