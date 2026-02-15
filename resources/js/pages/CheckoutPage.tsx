@@ -21,7 +21,9 @@ interface CheckoutPageProps {
     creditCardEnabled: boolean;
 }
 
-export default function CheckoutPage({ creditCardEnabled = false }: CheckoutPageProps) {
+export default function CheckoutPage({
+    creditCardEnabled = false,
+}: CheckoutPageProps) {
     const items = useCartStore((state) => state.items);
     const getTotalPrice = useCartStore((state) => state.getTotalPrice);
     const clearCart = useCartStore((state) => state.clearCart);
@@ -287,7 +289,6 @@ export default function CheckoutPage({ creditCardEnabled = false }: CheckoutPage
                         setLatitude(location.latitude);
                         setLongitude(location.longitude);
                         setHasLocationCoordinates(true);
-                        toast.success('Location retrieved!');
                         setLocationLoading(false);
                         // Calculate delivery fee
                         await calculateDeliveryFee(
@@ -317,7 +318,6 @@ export default function CheckoutPage({ creditCardEnabled = false }: CheckoutPage
                         setLatitude(latitude);
                         setLongitude(longitude);
                         setHasLocationCoordinates(true);
-                        toast.success('Location retrieved!');
                         setLocationLoading(false);
                         // Calculate delivery fee
                         await calculateDeliveryFee(latitude, longitude);
