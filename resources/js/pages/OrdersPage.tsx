@@ -29,7 +29,7 @@ export default function OrdersPage({ orders }: Props) {
   };
 
   const formatPrice = (price: number | null | undefined): string => {
-    if (price === null || price === undefined || isNaN(price)) {
+    if (price === null || price === undefined || typeof price !== 'number' || isNaN(price)) {
       return '0';
     }
     return price % 1 === 0 ? price.toString() : price.toFixed(2);

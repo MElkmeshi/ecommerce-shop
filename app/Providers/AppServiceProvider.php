@@ -18,9 +18,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        if (app()->environment('production')) {
+        // Always force HTTPS when APP_URL uses https
+        if (str_contains(config('app.url'), 'https://')) {
             URL::forceScheme('https');
         }
+
         $this->app->bind(GoogleMapsService::class, function ($app) {
             $settings = $app->make(AppSettings::class);
 
