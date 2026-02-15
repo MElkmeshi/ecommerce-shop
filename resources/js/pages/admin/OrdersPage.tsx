@@ -24,6 +24,7 @@ import AdminLayout from '@/layouts/admin-layout';
 
 interface OrderItem {
   product_name: { en: string; ar: string };
+  product_image: string | null;
   quantity: number;
   price: number;
 }
@@ -279,6 +280,7 @@ function OrdersPage() {
                     <table className="w-full">
                       <thead className="bg-muted/50">
                         <tr>
+                          <th className="p-3 text-left text-sm font-medium">Image</th>
                           <th className="p-3 text-left text-sm font-medium">Product</th>
                           <th className="p-3 text-left text-sm font-medium">Quantity</th>
                           <th className="p-3 text-left text-sm font-medium">Price</th>
@@ -288,6 +290,19 @@ function OrdersPage() {
                       <tbody>
                         {selectedOrder.items.map((item, index) => (
                           <tr key={index} className="border-t">
+                            <td className="p-3">
+                              {item.product_image ? (
+                                <img
+                                  src={item.product_image}
+                                  alt={item.product_name?.en || 'Product'}
+                                  className="h-12 w-12 object-cover rounded"
+                                />
+                              ) : (
+                                <div className="h-12 w-12 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">
+                                  No image
+                                </div>
+                              )}
+                            </td>
                             <td className="p-3 text-sm">
                               {item.product_name?.en || 'Unknown Product'}
                             </td>

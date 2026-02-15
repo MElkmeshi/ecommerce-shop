@@ -40,6 +40,7 @@ class OrderController extends Controller
                             'en' => $item->product->getTranslation('name', 'en'),
                             'ar' => $item->product->getTranslation('name', 'ar'),
                         ] : ['en' => 'Unknown Product', 'ar' => 'منتج غير معروف'],
+                        'product_image' => $item->product?->getFirstMediaUrl('product_images', 'thumb'),
                         'quantity' => (int) ($item->quantity ?? 0),
                         'price' => (float) ($item->price ?? 0),
                     ];
