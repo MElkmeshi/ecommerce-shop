@@ -41,6 +41,33 @@ export default function CheckoutPage() {
     return price % 1 === 0 ? price.toString() : price.toFixed(2);
   };
 
+  // Extract Plus Code from Google Maps link
+  const extractPlusCodeFromLink = (input: string): string | null => {
+    // Check if input is a Google Maps link
+    if (input.includes('maps.google.com') || input.includes('goo.gl/maps')) {
+      // Try to extract Plus Code from various Google Maps URL formats
+      // Format 1: https://maps.google.com/?q=8G6X%2BXX
+      // Format 2: https://goo.gl/maps/xyz (would need to follow redirect)
+      // Format 3: https://www.google.com/maps/place/8G6X%2BXX
+      const plusCodeMatch = input.match(/([23456789C][23456789CFGHJMPQRV][23456789CFGHJMPQRVWX]{6}\+[23456789CFGHJMPQRVWX]{2,3})/i);
+      if (plusCodeMatch) {
+        return decodeURIComponent(plusCodeMatch[1]);
+      }
+    }
+    return null;
+  };
+
+  const handlePlusCodeChange = (value: string) => {
+    // Check if it's a Google Maps link
+    const extracted = extractPlusCodeFromLink(value);
+    if (extracted) {
+      setPlusCode(extracted);
+      toast.success(`Plus Code extracted: ${extracted}`);
+    } else {
+      setPlusCode(value);
+    }
+  };
+
   // Check if Telegram location manager is supported
   useEffect(() => {
     // Only mount if supported
@@ -242,7 +269,7 @@ export default function CheckoutPage() {
       const response = await axios.post('/orders', {
         phoneNumber,
         location: {
-          address,
+          address: address || null,
           latitude,
           longitude,
           plusCode: plusCode || null,
@@ -327,56 +354,40 @@ export default function CheckoutPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="address">Delivery Address</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="address"
-                    type="text"
-                    placeholder="Enter your full address"
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    required={!showPlusCodeField}
-                    className="flex-1"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={requestLocation}
-                    disabled={locationLoading}
-                  >
-                    <MapPin className="h-4 w-4" />
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {hasLocationCoordinates ? (
-                    'Location retrieved successfully'
-                  ) : (
-                    <>
-                      Click the location icon to auto-fill your address and calculate delivery fee.{' '}
-                      {!showPlusCodeField && (
-                        <button
-                          type="button"
-                          onClick={() => setShowPlusCodeField(true)}
-                          className="text-primary underline hover:no-underline"
-                        >
-                          Use Plus Code instead
-                        </button>
-                      )}
-                    </>
-                  )}
-                </p>
+                <Label htmlFor="location">Delivery Location</Label>
+                {!showPlusCodeField ? (
+                  <>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={requestLocation}
+                      disabled={locationLoading}
+                      className="w-full"
+                    >
+                      <MapPin className="mr-2 h-4 w-4" />
+                      {locationLoading ? 'Getting location...' : hasLocationCoordinates ? 'Location retrieved ✓' : 'Use my current location'}
+                    </Button>
+                    <p className="text-xs text-muted-foreground">
+                      Click to share your location and calculate delivery fee
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    Using Plus Code for delivery location
+                  </p>
+                )}
               </div>
 
               {showPlusCodeField && (
                 <div className="space-y-2">
-                  <Label htmlFor="plusCode">Plus Code</Label>
+                  <Label htmlFor="plusCode">Plus Code or Google Maps Link</Label>
                   <div className="flex gap-2">
                     <Input
                       id="plusCode"
                       type="text"
-                      placeholder="8G6X+XX Tripoli"
+                      placeholder="8G6X+XX Tripoli or paste Google Maps link"
                       value={plusCode}
-                      onChange={(e) => setPlusCode(e.target.value)}
+                      onChange={(e) => handlePlusCodeChange(e.target.value)}
                       className="flex-1"
                     />
                     <Button
@@ -389,7 +400,7 @@ export default function CheckoutPage() {
                     </Button>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Enter Plus Code (e.g., 8G6X+XX Tripoli) and click calculator to calculate delivery fee
+                    Enter Plus Code (e.g., 8G6X+XX Tripoli) or paste a Google Maps link. Click calculator to get delivery fee.
                   </p>
                 </div>
               )}
