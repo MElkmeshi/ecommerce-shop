@@ -1,3 +1,4 @@
+git reset --hard origin/main
 git pull
 php artisan migrate
 php artisan cache:clear
