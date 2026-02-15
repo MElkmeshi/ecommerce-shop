@@ -9,7 +9,7 @@ import axios from 'axios';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
-// Initialize Telegram WebApp and configure axios + Inertia
+// Initialize Telegram WebApp and configure axios
 if (typeof window !== 'undefined') {
     const telegram = (window as any).Telegram;
 
@@ -41,21 +41,6 @@ if (typeof window !== 'undefined') {
             }
             return config;
         });
-
-        // Add Inertia router interceptor to include Telegram initData in all Inertia requests
-        router.on('before', (event) => {
-            console.log('📡 Inertia Request:', {
-                url: event.detail.visit.url,
-                method: event.detail.visit.method,
-                hasInitData: !!initData,
-                initDataPreview: initData ? initData.substring(0, 50) + '...' : 'NONE',
-            });
-
-            event.detail.visit.headers = {
-                ...event.detail.visit.headers,
-                'x-telegram-init-data': initData,
-            };
-        });
     } else {
         console.warn('⚠️ Telegram WebApp not available - running in browser without Telegram');
     }
@@ -69,6 +54,32 @@ createInertiaApp({
             import.meta.glob('./pages/**/*.tsx'),
         ),
     setup({ el, App, props }) {
+        // Configure Inertia to include Telegram initData header in all requests
+        router.on('before', (event) => {
+            const telegram = (window as any).Telegram;
+            const initData = telegram?.WebApp?.initData || '';
+
+            console.log('📡 Inertia Navigation:', {
+                url: event.detail.visit.url.toString(),
+                method: event.detail.visit.method,
+                hasInitData: !!initData,
+                initDataLength: initData.length,
+                currentHeaders: event.detail.visit.headers,
+            });
+
+            if (initData) {
+                // Initialize headers object if it doesn't exist
+                if (!event.detail.visit.headers) {
+                    event.detail.visit.headers = {};
+                }
+                event.detail.visit.headers['x-telegram-init-data'] = initData;
+
+                console.log('✅ Added initData header to Inertia request');
+            } else {
+                console.warn('⚠️ No initData available for Inertia request');
+            }
+        });
+
         const root = createRoot(el);
 
         root.render(
