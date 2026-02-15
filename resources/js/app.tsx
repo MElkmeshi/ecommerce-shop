@@ -1,4 +1,4 @@
-import { createInertiaApp } from '@inertiajs/react';
+import { createInertiaApp, router } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
@@ -9,7 +9,7 @@ import axios from 'axios';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
-// Initialize Telegram WebApp and configure axios
+// Initialize Telegram WebApp and configure axios + Inertia
 if (typeof window !== 'undefined') {
     const telegram = (window as any).Telegram;
 
@@ -26,10 +26,10 @@ if (typeof window !== 'undefined') {
         telegram.WebApp.ready();
         telegram.WebApp.expand();
 
-        // Add axios interceptor to include Telegram initData in all requests
-        axios.interceptors.request.use((config) => {
-            const initData = telegram.WebApp.initData;
+        const initData = telegram.WebApp.initData;
 
+        // Add axios interceptor to include Telegram initData in all axios requests
+        axios.interceptors.request.use((config) => {
             console.log('📡 Axios Request:', {
                 url: config.url,
                 hasInitData: !!initData,
@@ -40,6 +40,21 @@ if (typeof window !== 'undefined') {
                 config.headers['x-telegram-init-data'] = initData;
             }
             return config;
+        });
+
+        // Add Inertia router interceptor to include Telegram initData in all Inertia requests
+        router.on('before', (event) => {
+            console.log('📡 Inertia Request:', {
+                url: event.detail.visit.url,
+                method: event.detail.visit.method,
+                hasInitData: !!initData,
+                initDataPreview: initData ? initData.substring(0, 50) + '...' : 'NONE',
+            });
+
+            event.detail.visit.headers = {
+                ...event.detail.visit.headers,
+                'x-telegram-init-data': initData,
+            };
         });
     } else {
         console.warn('⚠️ Telegram WebApp not available - running in browser without Telegram');
