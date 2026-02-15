@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\Admin;
 use Illuminate\Support\Facades\Gate;
 use Laravel\Telescope\IncomingEntry;
 use Laravel\Telescope\Telescope;
@@ -55,6 +56,10 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
      */
     protected function gate(): void
     {
-        Gate::define('viewTelescope', fn ($user) => true);
+        Gate::define('viewTelescope', function ($user) {
+            // In local environment, allow everyone (middleware is already disabled)
+            // In production, only allow Admin users
+            return $this->app->environment('local') || $user instanceof Admin;
+        });
     }
 }

@@ -92,10 +92,9 @@ return [
     |
     */
 
-    'middleware' => [
-        'web',
-        Authorize::class,
-    ],
+    'middleware' => env('APP_ENV') === 'local'
+        ? ['web']
+        : ['web', Authorize::class],
 
     /*
     |--------------------------------------------------------------------------
