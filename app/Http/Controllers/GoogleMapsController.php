@@ -50,9 +50,12 @@ class GoogleMapsController extends Controller
                 ]);
             }
 
+            // Decode the URL first to handle encoded parameters
+            $decodedUrl = urldecode($finalUrl);
+
             // Try to extract coordinates from the URL
             // Format: /search/32.828373,+13.213278 or /@32.828373,13.213278
-            if (preg_match('/[\/\@](-?\d+\.\d+),\s*[\+%2B]?(-?\d+\.\d+)/', $finalUrl, $coordMatches)) {
+            if (preg_match('/[\/\@](-?\d+\.\d+),\s*[\+%2B]?(-?\d+\.\d+)/', $decodedUrl, $coordMatches)) {
                 $latitude = (float) $coordMatches[1];
                 $longitude = (float) $coordMatches[2];
 
