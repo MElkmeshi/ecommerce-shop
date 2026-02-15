@@ -34,7 +34,10 @@ export default function CheckoutPage() {
   const [showPlusCodeField, setShowPlusCodeField] = useState(false);
 
   // Format price helper
-  const formatPrice = (price: number): string => {
+  const formatPrice = (price: number | null | undefined): string => {
+    if (price === null || price === undefined || isNaN(price)) {
+      return '0';
+    }
     return price % 1 === 0 ? price.toString() : price.toFixed(2);
   };
 
@@ -84,9 +87,19 @@ export default function CheckoutPage() {
       });
 
       const data = response.data;
-      setDeliveryFee(data.fee);
-      setDistance(data.distance);
-      setDeliveryMessage(data.message);
+
+      // Check if response contains an error
+      if (data.error) {
+        toast.error(data.error);
+        setDeliveryFee(0);
+        setDistance(null);
+        setDeliveryMessage(null);
+        return;
+      }
+
+      setDeliveryFee(data.fee ?? 0);
+      setDistance(data.distance ?? null);
+      setDeliveryMessage(data.message ?? null);
 
       if (!data.withinRange) {
         toast.error(data.message);
@@ -116,9 +129,19 @@ export default function CheckoutPage() {
       });
 
       const data = response.data;
-      setDeliveryFee(data.fee);
-      setDistance(data.distance);
-      setDeliveryMessage(data.message);
+
+      // Check if response contains an error
+      if (data.error) {
+        toast.error(data.error);
+        setDeliveryFee(0);
+        setDistance(null);
+        setDeliveryMessage(null);
+        return;
+      }
+
+      setDeliveryFee(data.fee ?? 0);
+      setDistance(data.distance ?? null);
+      setDeliveryMessage(data.message ?? null);
 
       if (!data.withinRange) {
         toast.error(data.message);

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class GoogleMapsService
 {
@@ -33,27 +34,47 @@ class GoogleMapsService
             ]);
 
             if (! $response->ok()) {
+                Log::error('Google Maps API request failed', [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+
                 return null;
             }
 
             $json = $response->json();
 
             if (($json['status'] ?? '') !== 'OK') {
+                Log::error('Google Maps API returned non-OK status', [
+                    'status' => $json['status'] ?? 'UNKNOWN',
+                    'error_message' => $json['error_message'] ?? 'No error message',
+                    'response' => $json,
+                ]);
+
                 return null;
             }
 
             $rows = $json['rows'] ?? [];
             if (empty($rows)) {
+                Log::error('Google Maps API returned empty rows', ['response' => $json]);
+
                 return null;
             }
 
             $elements = $rows[0]['elements'] ?? [];
             if (empty($elements)) {
+                Log::error('Google Maps API returned empty elements', ['response' => $json]);
+
                 return null;
             }
 
             $element = $elements[0];
             if (($element['status'] ?? '') !== 'OK') {
+                Log::error('Google Maps API element status not OK', [
+                    'element_status' => $element['status'] ?? 'UNKNOWN',
+                    'element' => $element,
+                ]);
+
                 return null;
             }
 
@@ -105,22 +126,45 @@ class GoogleMapsService
             ]);
 
             if (! $response->ok()) {
+                Log::error('Google Maps Geocoding API request failed', [
+                    'plus_code' => $plusCode,
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+
                 return null;
             }
 
             $json = $response->json();
 
             if (($json['status'] ?? '') !== 'OK') {
+                Log::error('Google Maps Geocoding API returned non-OK status', [
+                    'plus_code' => $plusCode,
+                    'status' => $json['status'] ?? 'UNKNOWN',
+                    'error_message' => $json['error_message'] ?? 'No error message',
+                    'response' => $json,
+                ]);
+
                 return null;
             }
 
             $results = $json['results'] ?? [];
             if (empty($results)) {
+                Log::error('Google Maps Geocoding API returned empty results', [
+                    'plus_code' => $plusCode,
+                    'response' => $json,
+                ]);
+
                 return null;
             }
 
             $location = $results[0]['geometry']['location'] ?? null;
             if (! $location) {
+                Log::error('Google Maps Geocoding API missing location', [
+                    'plus_code' => $plusCode,
+                    'result' => $results[0],
+                ]);
+
                 return null;
             }
 
