@@ -80,13 +80,14 @@ class GoogleMapsController extends Controller
                     }
                 }
 
-                // If API call fails or no Plus Code, return coordinates
+                // If API call fails or no Plus Code, return coordinates as success
+                // The frontend can use coordinates to calculate delivery fee
                 return response()->json([
-                    'success' => false,
-                    'error' => 'Found coordinates but could not convert to Plus Code',
-                    'finalUrl' => $finalUrl,
+                    'success' => true,
+                    'plusCode' => null,
                     'coordinates' => ['lat' => $latitude, 'lng' => $longitude],
-                ], 404);
+                    'finalUrl' => $finalUrl,
+                ]);
             }
 
             return response()->json([
