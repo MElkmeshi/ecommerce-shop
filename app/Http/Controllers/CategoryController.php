@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\CategoryResource;
 use App\Models\Category;
 use Illuminate\Http\JsonResponse;
 
@@ -12,14 +13,8 @@ class CategoryController extends Controller
      */
     public function apiIndex(): JsonResponse
     {
-        $categories = Category::all()->map(function ($category) {
-            return [
-                'id' => $category->id,
-                'name' => $category->name,
-                'slug' => $category->slug,
-            ];
-        });
+        $categories = Category::all();
 
-        return response()->json($categories);
+        return response()->json(CategoryResource::collection($categories)->resolve());
     }
 }

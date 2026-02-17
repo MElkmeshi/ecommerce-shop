@@ -3,7 +3,6 @@
 namespace App\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class UpdateCategoryRequest extends FormRequest
 {
@@ -22,31 +21,10 @@ class UpdateCategoryRequest extends FormRequest
      */
     public function rules(): array
     {
-        $categoryId = $this->route('category');
-
         return [
             'name' => 'sometimes|array',
             'name.en' => 'sometimes|string|max:255',
             'name.ar' => 'sometimes|string|max:255',
-            'slug' => [
-                'sometimes',
-                'string',
-                'max:255',
-                Rule::unique('categories', 'slug')->ignore($categoryId),
-                'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/',
-            ],
-        ];
-    }
-
-    /**
-     * Get custom messages for validator errors.
-     *
-     * @return array<string, string>
-     */
-    public function messages(): array
-    {
-        return [
-            'slug.regex' => 'The slug must be lowercase and contain only letters, numbers, and hyphens.',
         ];
     }
 

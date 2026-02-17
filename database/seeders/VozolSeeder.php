@@ -20,7 +20,6 @@ class VozolSeeder extends Seeder
         */
         $category = Category::create([
             'name' => ['en' => 'Vapes', 'ar' => 'السجائر الإلكترونية'],
-            'slug' => 'vapes',
         ]);
 
         /*
@@ -30,7 +29,6 @@ class VozolSeeder extends Seeder
         */
         $flavorType = VariantType::create([
             'name' => ['en' => 'Flavor', 'ar' => 'النكهة'],
-            'slug' => 'flavor',
         ]);
 
         /*

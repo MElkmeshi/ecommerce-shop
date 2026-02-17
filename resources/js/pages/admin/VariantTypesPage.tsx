@@ -26,7 +26,6 @@ interface VariantValue {
 interface VariantType {
   id: number;
   name: { en: string; ar: string };
-  slug: string;
   variant_values: VariantValue[];
 }
 
@@ -40,7 +39,6 @@ function VariantTypesPage() {
   // Form state
   const [nameEn, setNameEn] = useState('');
   const [nameAr, setNameAr] = useState('');
-  const [slug, setSlug] = useState('');
   const [values, setValues] = useState<Array<{ value: { en: string; ar: string } }>>([
     { value: { en: '', ar: '' } },
   ]);
@@ -58,10 +56,6 @@ function VariantTypesPage() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const generateSlug = (text: string) => {
-    return text.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
   };
 
   const addValue = () => {
@@ -94,7 +88,6 @@ function VariantTypesPage() {
     try {
       await axios.post('/admin/api/variant-types', {
         name: { en: nameEn, ar: nameAr },
-        slug: slug || generateSlug(nameEn),
         values: filteredValues.length > 0 ? filteredValues : undefined,
       });
       toast.success('Variant type created successfully');
@@ -115,7 +108,6 @@ function VariantTypesPage() {
     try {
       await axios.put(`/admin/api/variant-types/${currentVariantType.id}`, {
         name: { en: nameEn, ar: nameAr },
-        slug: slug,
         values: filteredValues.length > 0 ? filteredValues : undefined,
       });
       toast.success('Variant type updated successfully');
@@ -143,7 +135,6 @@ function VariantTypesPage() {
     setCurrentVariantType(variantType);
     setNameEn(variantType.name.en);
     setNameAr(variantType.name.ar);
-    setSlug(variantType.slug);
     setValues(
       variantType.variant_values.length > 0
         ? variantType.variant_values.map((v) => ({ value: v.value }))
@@ -155,7 +146,6 @@ function VariantTypesPage() {
   const resetForm = () => {
     setNameEn('');
     setNameAr('');
-    setSlug('');
     setValues([{ value: { en: '', ar: '' } }]);
     setCurrentVariantType(null);
   };
@@ -193,7 +183,6 @@ function VariantTypesPage() {
                     <tr className="border-b text-left">
                       <th className="pb-3 font-semibold">Name (English)</th>
                       <th className="pb-3 font-semibold">Name (Arabic)</th>
-                      <th className="pb-3 font-semibold">Slug</th>
                       <th className="pb-3 font-semibold">Values</th>
                       <th className="pb-3 font-semibold">Actions</th>
                     </tr>
@@ -203,9 +192,6 @@ function VariantTypesPage() {
                       <tr key={variantType.id} className="border-b">
                         <td className="py-3">{variantType.name.en}</td>
                         <td className="py-3">{variantType.name.ar}</td>
-                        <td className="py-3">
-                          <Badge variant="secondary">{variantType.slug}</Badge>
-                        </td>
                         <td className="py-3">
                           <div className="flex flex-wrap gap-1">
                             {variantType.variant_values.slice(0, 3).map((value, idx) => (
@@ -261,10 +247,7 @@ function VariantTypesPage() {
                   <Input
                     id="nameEn"
                     value={nameEn}
-                    onChange={(e) => {
-                      setNameEn(e.target.value);
-                      if (!slug) setSlug(generateSlug(e.target.value));
-                    }}
+                    onChange={(e) => setNameEn(e.target.value)}
                     placeholder="e.g., Size"
                     required
                   />
@@ -276,15 +259,6 @@ function VariantTypesPage() {
                     value={nameAr}
                     onChange={(e) => setNameAr(e.target.value)}
                     placeholder="e.g., الحجم"
-                    required
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="slug">Slug</Label>
-                  <Input
-                    id="slug"
-                    value={slug}
-                    onChange={(e) => setSlug(generateSlug(e.target.value))}
                     required
                   />
                 </div>
@@ -359,15 +333,6 @@ function VariantTypesPage() {
                     id="editNameAr"
                     value={nameAr}
                     onChange={(e) => setNameAr(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="editSlug">Slug</Label>
-                  <Input
-                    id="editSlug"
-                    value={slug}
-                    onChange={(e) => setSlug(generateSlug(e.target.value))}
                     required
                   />
                 </div>

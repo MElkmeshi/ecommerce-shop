@@ -25,7 +25,6 @@ interface VariantValue {
   variant_type?: {
     id: number;
     name: { en: string; ar: string };
-    slug: string;
   };
 }
 
@@ -40,7 +39,6 @@ interface ProductVariant {
 interface VariantType {
   id: number;
   name: { en: string; ar: string };
-  slug: string;
   variant_values: VariantValue[];
 }
 
@@ -55,7 +53,6 @@ interface Product {
   category: {
     id: number;
     name: { en: string; ar: string };
-    slug: string;
   };
   image_url?: string;
   thumb_url?: string;
@@ -64,7 +61,6 @@ interface Product {
 interface Category {
   id: number;
   name: { en: string; ar: string };
-  slug: string;
 }
 
 function AdminProductsPage() {

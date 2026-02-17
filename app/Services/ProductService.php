@@ -23,11 +23,9 @@ class ProductService
             });
         }
 
-        // Filter by category slug
+        // Filter by category ID
         if (! empty($filters['category'])) {
-            $query->whereHas('category', function ($q) use ($filters) {
-                $q->where('slug', $filters['category']);
-            });
+            $query->where('category_id', $filters['category']);
         }
 
         // Filter by variant values

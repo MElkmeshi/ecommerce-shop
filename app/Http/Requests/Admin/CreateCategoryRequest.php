@@ -25,19 +25,6 @@ class CreateCategoryRequest extends FormRequest
             'name' => 'required|array',
             'name.en' => 'required|string|max:255',
             'name.ar' => 'required|string|max:255',
-            'slug' => ['required', 'string', 'max:255', 'unique:categories,slug', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/'],
-        ];
-    }
-
-    /**
-     * Get custom messages for validator errors.
-     *
-     * @return array<string, string>
-     */
-    public function messages(): array
-    {
-        return [
-            'slug.regex' => 'The slug must be lowercase and contain only letters, numbers, and hyphens.',
         ];
     }
 

@@ -18,7 +18,11 @@
       "Bash(git push:*)",
       "Bash(npm:*)",
       "Bash(ssh:*)",
-      "mcp__ide__getDiagnostics"
+      "mcp__ide__getDiagnostics",
+      "Bash(grep:*)",
+      "Bash(git checkout:*)",
+      "Bash(npx tsc:*)",
+      "Bash(find:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

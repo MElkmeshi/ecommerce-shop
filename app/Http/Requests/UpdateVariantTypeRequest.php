@@ -21,13 +21,10 @@ class UpdateVariantTypeRequest extends FormRequest
      */
     public function rules(): array
     {
-        $variantTypeId = $this->route('id');
-
         return [
             'name' => 'sometimes|required|array',
             'name.en' => 'sometimes|required|string|max:255',
             'name.ar' => 'sometimes|required|string|max:255',
-            'slug' => "nullable|string|max:255|unique:variant_types,slug,{$variantTypeId}",
             'values' => 'nullable|array',
             'values.*.value' => 'required|array',
             'values.*.value.en' => 'required|string|max:255',
@@ -45,7 +42,6 @@ class UpdateVariantTypeRequest extends FormRequest
         return [
             'name.en.required' => 'The English name is required.',
             'name.ar.required' => 'The Arabic name is required.',
-            'slug.unique' => 'This slug is already in use.',
             'values.*.value.en.required' => 'Each value must have an English translation.',
             'values.*.value.ar.required' => 'Each value must have an Arabic translation.',
         ];

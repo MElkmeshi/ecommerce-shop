@@ -13,7 +13,6 @@ class CategoryService
     {
         return Category::create([
             'name' => $data['name'],
-            'slug' => $data['slug'],
         ]);
     }
 
@@ -32,10 +31,6 @@ class CategoryService
 
         if (isset($data['name'])) {
             $updateData['name'] = $data['name'];
-        }
-
-        if (isset($data['slug'])) {
-            $updateData['slug'] = $data['slug'];
         }
 
         $category->update($updateData);

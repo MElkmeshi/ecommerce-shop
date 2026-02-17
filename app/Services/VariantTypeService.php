@@ -33,7 +33,6 @@ class VariantTypeService
         return DB::transaction(function () use ($data) {
             $variantType = VariantType::create([
                 'name' => $data['name'],
-                'slug' => $data['slug'] ?? null,
             ]);
 
             if (! empty($data['values'])) {
@@ -58,7 +57,6 @@ class VariantTypeService
 
             $variantType->update([
                 'name' => $data['name'] ?? $variantType->name,
-                'slug' => $data['slug'] ?? $variantType->slug,
             ]);
 
             if (isset($data['values'])) {

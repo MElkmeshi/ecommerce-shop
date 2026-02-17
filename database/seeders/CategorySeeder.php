@@ -15,23 +15,18 @@ class CategorySeeder extends Seeder
         $categories = [
             [
                 'name' => ['en' => 'Electronics', 'ar' => 'إلكترونيات'],
-                'slug' => 'electronics',
             ],
             [
                 'name' => ['en' => 'Clothing', 'ar' => 'ملابس'],
-                'slug' => 'clothing',
             ],
             [
                 'name' => ['en' => 'Books', 'ar' => 'كتب'],
-                'slug' => 'books',
             ],
             [
                 'name' => ['en' => 'Home & Garden', 'ar' => 'المنزل والحديقة'],
-                'slug' => 'home-garden',
             ],
             [
                 'name' => ['en' => 'Sports', 'ar' => 'رياضة'],
-                'slug' => 'sports',
             ],
         ];
 

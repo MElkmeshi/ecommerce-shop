@@ -25,7 +25,6 @@ class CreateVariantTypeRequest extends FormRequest
             'name' => 'required|array',
             'name.en' => 'required|string|max:255',
             'name.ar' => 'required|string|max:255',
-            'slug' => 'nullable|string|max:255|unique:variant_types,slug',
             'values' => 'nullable|array',
             'values.*.value' => 'required|array',
             'values.*.value.en' => 'required|string|max:255',
@@ -44,7 +43,6 @@ class CreateVariantTypeRequest extends FormRequest
             'name.required' => 'The variant type name is required.',
             'name.en.required' => 'The English name is required.',
             'name.ar.required' => 'The Arabic name is required.',
-            'slug.unique' => 'This slug is already in use.',
             'values.*.value.en.required' => 'Each value must have an English translation.',
             'values.*.value.ar.required' => 'Each value must have an Arabic translation.',
         ];

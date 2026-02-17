@@ -13,27 +13,47 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { useCartStore } from '@/store/cartStore';
 import type { Product, VariantType, ProductVariant } from '@/types/ecommerce';
-import { ShoppingCart, Search, Plus, Minus, Filter, Package, X, ChevronUp } from 'lucide-react';
+import {
+    ShoppingCart,
+    Search,
+    Plus,
+    Minus,
+    Filter,
+    Package,
+    X,
+    ChevronUp,
+} from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { router } from '@inertiajs/react';
+
+interface Category {
+    id: number;
+    name: string | { en: string; ar: string };
+}
 
 interface Props {
     products: Product[];
+    categories: Category[];
     variantTypes: VariantType[];
     filters: any;
     user?: {
         name: string;
-        username: string | null;
+        username: number | null;
     } | null;
 }
 
 export default function ProductsPage({
     products,
+    categories,
     variantTypes,
     filters,
     user,
 }: Props) {
     const [search, setSearch] = useState(filters.search || '');
+    const [selectedCategory, setSelectedCategory] = useState<number | null>(
+        filters.category || null,
+    );
     const [selectedVariantValues, setSelectedVariantValues] = useState<
         number[]
     >([]);
@@ -47,6 +67,18 @@ export default function ProductsPage({
     const updateQuantity = useCartStore((state) => state.updateQuantity);
     const totalItems = useCartStore((state) => state.getTotalItems());
     const cartItems = useCartStore((state) => state.items);
+
+    const handleCategoryChange = (categoryId: number | null) => {
+        setSelectedCategory(categoryId);
+        router.visit('/', {
+            data: {
+                category: categoryId,
+                search: search || undefined,
+            },
+            preserveState: true,
+            preserveScroll: true,
+        });
+    };
 
     const handleVariantValueToggle = (valueId: number) => {
         setSelectedVariantValues((prev) =>
@@ -80,7 +112,10 @@ export default function ProductsPage({
         }
 
         const selectedForProduct = selectedVariants[product.id];
-        if (!selectedForProduct || Object.keys(selectedForProduct).length === 0) {
+        if (
+            !selectedForProduct ||
+            Object.keys(selectedForProduct).length === 0
+        ) {
             // No selections made and multiple variants - require user to select
             return null;
         }
@@ -108,7 +143,7 @@ export default function ProductsPage({
         addItem({
             productId: product.id,
             productVariantId: variant.id,
-            name: product.name,
+            name: typeof product.name === 'string' ? product.name : product.name?.en || 'Product',
             variantDisplay: variant.display_name,
             price: variant.price,
             imageUrl: product.thumb_url,
@@ -241,7 +276,11 @@ export default function ProductsPage({
             {user && (
                 <div className="mb-6">
                     <p className="text-lg text-muted-foreground">
-                        Hey, <span className="font-semibold text-foreground">{user.name}</span>!
+                        Hey,{' '}
+                        <span className="font-semibold text-foreground">
+                            {user.name}
+                        </span>
+                        !
                     </p>
                 </div>
             )}
@@ -259,7 +298,8 @@ export default function ProductsPage({
                     />
                 </div>
                 {/* Mobile Filter Toggle Button */}
-                {variantTypes && variantTypes.length > 0 && (
+                {(categories.length > 0 ||
+                    (variantTypes && variantTypes.length > 0)) && (
                     <Button
                         variant="outline"
                         size="icon"
@@ -267,9 +307,11 @@ export default function ProductsPage({
                         onClick={() => setIsFilterOpen(!isFilterOpen)}
                     >
                         <Filter className="h-4 w-4" />
-                        {selectedVariantValues.length > 0 && (
-                            <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
-                                {selectedVariantValues.length}
+                        {(selectedCategory ||
+                            selectedVariantValues.length > 0) && (
+                            <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
+                                {(selectedCategory ? 1 : 0) +
+                                    selectedVariantValues.length}
                             </span>
                         )}
                     </Button>
@@ -277,11 +319,34 @@ export default function ProductsPage({
             </div>
 
             {/* Active Filters (Mobile & Desktop) */}
-            {selectedVariantValues.length > 0 && (
+            {(selectedCategory || selectedVariantValues.length > 0) && (
                 <div className="mb-4 flex flex-wrap items-center gap-2">
                     <span className="text-sm font-medium text-muted-foreground">
                         Active Filters:
                     </span>
+                    {selectedCategory && (
+                        <Badge variant="secondary" className="gap-1 pr-1">
+                            {categories.find((c) => c.id === selectedCategory)
+                                ?.name &&
+                            typeof categories.find(
+                                (c) => c.id === selectedCategory,
+                            )?.name === 'object'
+                                ? (
+                                      categories.find(
+                                          (c) => c.id === selectedCategory,
+                                      )?.name as { en: string; ar: string }
+                                  ).en
+                                : categories.find(
+                                      (c) => c.id === selectedCategory,
+                                  )?.name}
+                            <button
+                                onClick={() => handleCategoryChange(null)}
+                                className="ml-1 rounded-full hover:bg-muted-foreground/20"
+                            >
+                                <X className="h-3 w-3" />
+                            </button>
+                        </Badge>
+                    )}
                     {selectedVariantValues.map((valueId) => {
                         // Find the variant value details
                         const variantValue = variantTypes
@@ -298,7 +363,9 @@ export default function ProductsPage({
                             >
                                 {variantValue.value.en}
                                 <button
-                                    onClick={() => handleVariantValueToggle(valueId)}
+                                    onClick={() =>
+                                        handleVariantValueToggle(valueId)
+                                    }
                                     className="ml-1 rounded-full hover:bg-muted-foreground/20"
                                 >
                                     <X className="h-3 w-3" />
@@ -309,7 +376,10 @@ export default function ProductsPage({
                     <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => setSelectedVariantValues([])}
+                        onClick={() => {
+                            setSelectedVariantValues([]);
+                            handleCategoryChange(null);
+                        }}
                         className="h-6 text-xs"
                     >
                         Clear All
@@ -318,67 +388,69 @@ export default function ProductsPage({
             )}
 
             {/* Mobile Filter Section */}
-            {variantTypes && variantTypes.length > 0 && isFilterOpen && (
-                <Card className="mb-6 lg:hidden">
-                    <CardHeader className="flex flex-row items-center justify-between pb-3">
-                        <CardTitle className="text-base">Filters</CardTitle>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => setIsFilterOpen(false)}
-                        >
-                            <ChevronUp className="h-4 w-4" />
-                        </Button>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        {variantTypes.map((variantType) => (
-                            <div key={variantType.id} className="space-y-2">
-                                <h3 className="text-sm font-semibold">
-                                    {variantType.name.en}
-                                </h3>
-                                <div className="space-y-1">
-                                    {variantType.variant_values.map((value) => (
-                                        <div
-                                            key={value.id}
-                                            className="flex items-center space-x-2"
+            {(categories.length > 0 ||
+                (variantTypes && variantTypes.length > 0)) &&
+                isFilterOpen && (
+                    <Card className="mb-6 lg:hidden">
+                        <CardHeader className="flex flex-row items-center justify-between pb-3">
+                            <CardTitle className="text-base">Filters</CardTitle>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => setIsFilterOpen(false)}
+                            >
+                                <ChevronUp className="h-4 w-4" />
+                            </Button>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            {/* Categories Filter */}
+                            {categories.length > 0 && (
+                                <div className="space-y-2">
+                                    <h3 className="text-sm font-semibold">
+                                        Categories
+                                    </h3>
+                                    <div className="space-y-1">
+                                        <button
+                                            onClick={() =>
+                                                handleCategoryChange(null)
+                                            }
+                                            className={`w-full rounded px-2 py-1.5 text-left text-sm transition-colors ${
+                                                !selectedCategory
+                                                    ? 'bg-primary text-primary-foreground'
+                                                    : 'hover:bg-muted'
+                                            }`}
                                         >
-                                            <Checkbox
-                                                id={`mobile-filter-${value.id}`}
-                                                checked={selectedVariantValues.includes(
-                                                    value.id,
-                                                )}
-                                                onCheckedChange={() =>
-                                                    handleVariantValueToggle(value.id)
+                                            All Categories
+                                        </button>
+                                        {categories.map((category) => (
+                                            <button
+                                                key={category.id}
+                                                onClick={() =>
+                                                    handleCategoryChange(
+                                                        category.id,
+                                                    )
                                                 }
-                                            />
-                                            <Label
-                                                htmlFor={`mobile-filter-${value.id}`}
-                                                className="cursor-pointer text-sm font-normal"
+                                                className={`w-full rounded px-2 py-1.5 text-left text-sm transition-colors ${
+                                                    selectedCategory ===
+                                                    category.id
+                                                        ? 'bg-primary text-primary-foreground'
+                                                        : 'hover:bg-muted'
+                                                }`}
                                             >
-                                                {value.value.en}
-                                            </Label>
-                                        </div>
-                                    ))}
+                                                {typeof category.name ===
+                                                'object'
+                                                    ? category.name.en
+                                                    : category.name}
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
-                    </CardContent>
-                </Card>
-            )}
+                            )}
 
-            <div className="flex gap-6">
-                {/* Desktop Variant Filters Sidebar */}
-                {variantTypes && variantTypes.length > 0 && (
-                    <aside className="hidden w-64 shrink-0 lg:block">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-lg">
-                                    Filters
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                {variantTypes.map((variantType) => (
+                            {/* Variant Filters */}
+                            {variantTypes &&
+                                variantTypes.map((variantType) => (
                                     <div
                                         key={variantType.id}
                                         className="space-y-2"
@@ -394,7 +466,7 @@ export default function ProductsPage({
                                                         className="flex items-center space-x-2"
                                                     >
                                                         <Checkbox
-                                                            id={`filter-${value.id}`}
+                                                            id={`mobile-filter-${value.id}`}
                                                             checked={selectedVariantValues.includes(
                                                                 value.id,
                                                             )}
@@ -405,7 +477,7 @@ export default function ProductsPage({
                                                             }
                                                         />
                                                         <Label
-                                                            htmlFor={`filter-${value.id}`}
+                                                            htmlFor={`mobile-filter-${value.id}`}
                                                             className="cursor-pointer text-sm font-normal"
                                                         >
                                                             {value.value.en}
@@ -416,6 +488,106 @@ export default function ProductsPage({
                                         </div>
                                     </div>
                                 ))}
+                        </CardContent>
+                    </Card>
+                )}
+
+            <div className="flex gap-6">
+                {/* Desktop Filters Sidebar */}
+                {(categories.length > 0 ||
+                    (variantTypes && variantTypes.length > 0)) && (
+                    <aside className="hidden w-64 shrink-0 lg:block">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="text-lg">
+                                    Filters
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                {/* Categories Filter */}
+                                {categories.length > 0 && (
+                                    <div className="space-y-2">
+                                        <h3 className="text-sm font-semibold">
+                                            Categories
+                                        </h3>
+                                        <div className="space-y-1">
+                                            <button
+                                                onClick={() =>
+                                                    handleCategoryChange(null)
+                                                }
+                                                className={`w-full rounded px-2 py-1.5 text-left text-sm transition-colors ${
+                                                    !selectedCategory
+                                                        ? 'bg-primary text-primary-foreground'
+                                                        : 'hover:bg-muted'
+                                                }`}
+                                            >
+                                                All Categories
+                                            </button>
+                                            {categories.map((category) => (
+                                                <button
+                                                    key={category.id}
+                                                    onClick={() =>
+                                                        handleCategoryChange(
+                                                            category.id,
+                                                        )
+                                                    }
+                                                    className={`w-full rounded px-2 py-1.5 text-left text-sm transition-colors ${
+                                                        selectedCategory ===
+                                                        category.id
+                                                            ? 'bg-primary text-primary-foreground'
+                                                            : 'hover:bg-muted'
+                                                    }`}
+                                                >
+                                                    {typeof category.name ===
+                                                    'object'
+                                                        ? category.name.en
+                                                        : category.name}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Variant Filters */}
+                                {variantTypes &&
+                                    variantTypes.map((variantType) => (
+                                        <div
+                                            key={variantType.id}
+                                            className="space-y-2"
+                                        >
+                                            <h3 className="text-sm font-semibold">
+                                                {variantType.name.en}
+                                            </h3>
+                                            <div className="space-y-1">
+                                                {variantType.variant_values.map(
+                                                    (value) => (
+                                                        <div
+                                                            key={value.id}
+                                                            className="flex items-center space-x-2"
+                                                        >
+                                                            <Checkbox
+                                                                id={`filter-${value.id}`}
+                                                                checked={selectedVariantValues.includes(
+                                                                    value.id,
+                                                                )}
+                                                                onCheckedChange={() =>
+                                                                    handleVariantValueToggle(
+                                                                        value.id,
+                                                                    )
+                                                                }
+                                                            />
+                                                            <Label
+                                                                htmlFor={`filter-${value.id}`}
+                                                                className="cursor-pointer text-sm font-normal"
+                                                            >
+                                                                {value.value.en}
+                                                            </Label>
+                                                        </div>
+                                                    ),
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
                             </CardContent>
                         </Card>
                     </aside>
@@ -425,7 +597,9 @@ export default function ProductsPage({
                 <div className="grid flex-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {filteredProducts.map((product) => {
                         const selectedVariant = getSelectedVariant(product);
-                        const hasVariants = product.product_variants && product.product_variants.length > 0;
+                        const hasVariants =
+                            product.product_variants &&
+                            product.product_variants.length > 0;
 
                         // If variant is selected, show its stock and price
                         // Otherwise, show total stock and lowest price
@@ -436,12 +610,15 @@ export default function ProductsPage({
                                   0,
                               ) ?? 0);
 
-                        const variantPrices = product.product_variants?.map(v => v.price).filter(p => p > 0) || [];
+                        const variantPrices =
+                            product.product_variants
+                                ?.map((v) => v.price)
+                                .filter((p) => p > 0) || [];
                         const displayPrice = selectedVariant
                             ? selectedVariant.price
                             : variantPrices.length > 0
-                                ? Math.min(...variantPrices)
-                                : 0;
+                              ? Math.min(...variantPrices)
+                              : 0;
                         const cartItem = cartItems.find(
                             (item) =>
                                 item.productId === product.id &&
@@ -454,7 +631,7 @@ export default function ProductsPage({
                                     <div className="aspect-video overflow-hidden rounded-t-lg">
                                         <img
                                             src={product.thumb_url}
-                                            alt={product.name}
+                                            alt={typeof product.name === 'string' ? product.name : product.name?.en || 'Product'}
                                             className="h-full w-full object-cover"
                                         />
                                     </div>
@@ -462,7 +639,7 @@ export default function ProductsPage({
                                 <CardHeader>
                                     <div className="flex items-start justify-between">
                                         <CardTitle className="text-lg">
-                                            {product.name}
+                                            {typeof product.name === 'string' ? product.name : product.name?.en || 'Product'}
                                         </CardTitle>
                                         <Badge
                                             variant={
@@ -477,12 +654,12 @@ export default function ProductsPage({
                                         </Badge>
                                     </div>
                                     <CardDescription>
-                                        {product.category.name}
+                                        {typeof product.category?.name === 'string' ? product.category.name : product.category?.name?.en || 'Category'}
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-3">
                                     <p className="line-clamp-2 text-sm text-muted-foreground">
-                                        {product.description}
+                                        {typeof product.description === 'string' ? product.description : product.description?.en || ''}
                                     </p>
 
                                     {/* Variant Selection */}
@@ -496,10 +673,12 @@ export default function ProductsPage({
                                                         new Map();
                                                     product.product_variants.forEach(
                                                         (variant) => {
-                                                            variant.variant_values.forEach(
+                                                            variant.variant_values?.forEach(
                                                                 (value) => {
                                                                     if (
                                                                         value.variant_type &&
+                                                                        value.variant_type.id &&
+                                                                        value.variant_type.name &&
                                                                         !variantTypesMap.has(
                                                                             value
                                                                                 .variant_type
@@ -529,7 +708,8 @@ export default function ProductsPage({
                                                     ).map((type) => {
                                                         // Filter variants based on selections from OTHER variant types
                                                         let availableVariants =
-                                                            product.product_variants || [];
+                                                            product.product_variants ||
+                                                            [];
 
                                                         Object.entries(
                                                             currentSelections,
@@ -595,11 +775,7 @@ export default function ProductsPage({
                                                         return (
                                                             <div key={type.id}>
                                                                 <Label className="text-xs font-semibold">
-                                                                    {
-                                                                        type
-                                                                            .name
-                                                                            .en
-                                                                    }
+                                                                    {type?.name?.en || 'Variant Type'}
                                                                 </Label>
                                                                 <div className="mt-1 flex flex-wrap gap-1">
                                                                     {Array.from(
@@ -634,11 +810,7 @@ export default function ProductsPage({
                                                                                     }
                                                                                     className="h-7 text-xs"
                                                                                 >
-                                                                                    {
-                                                                                        value
-                                                                                            .value
-                                                                                            .en
-                                                                                    }
+                                                                                    {value?.value?.en || 'Option'}
                                                                                 </Button>
                                                                             );
                                                                         },
@@ -653,7 +825,9 @@ export default function ProductsPage({
                                 </CardContent>
                                 <CardFooter className="flex items-center justify-between">
                                     <span className="text-xl font-bold">
-                                        {!selectedVariant && hasVariants && 'from '}
+                                        {!selectedVariant &&
+                                            hasVariants &&
+                                            'from '}
                                         {displayPrice} LYD
                                     </span>
                                     {cartItem ? (

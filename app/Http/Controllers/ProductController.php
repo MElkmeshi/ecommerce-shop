@@ -3,6 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\GetProductsRequest;
+use App\Http\Resources\CategoryResource;
+use App\Http\Resources\ProductResource;
+use App\Http\Resources\ProductVariantResource;
+use App\Models\Category;
 use App\Models\Product;
 use App\Services\ProductService;
 use App\Services\ProductVariantService;
@@ -28,6 +32,7 @@ class ProductController extends Controller
 
         $products = $this->productService->getProducts($filters);
         $variantTypes = $this->variantTypeService->getAllVariantTypes();
+        $categories = Category::query()->get();
         $telegramUser = $request->input('telegram_user');
 
         return Inertia::render('ProductsPage', [
@@ -35,45 +40,8 @@ class ProductController extends Controller
                 'name' => $telegramUser['first_name'] ?? $telegramUser['username'] ?? 'User',
                 'username' => $telegramUser['username'] ?? null,
             ] : null,
-            'products' => $products->map(function ($product) {
-                return [
-                    'id' => $product->id,
-                    'name' => $product->name,
-                    'description' => $product->description,
-                    'image_url' => $product->image_url,
-                    'thumb_url' => $product->thumb_url,
-                    'category' => [
-                        'id' => $product->category->id,
-                        'name' => $product->category->name,
-                        'slug' => $product->category->slug,
-                    ],
-                    'product_variants' => $product->productVariants->map(function ($variant) {
-                        return [
-                            'id' => $variant->id,
-                            'price' => $variant->price,
-                            'stock' => $variant->stock,
-                            'display_name' => $variant->display_name,
-                            'variant_values' => $variant->variantValues->map(function ($value) {
-                                return [
-                                    'id' => $value->id,
-                                    'value' => [
-                                        'en' => $value->getTranslation('value', 'en'),
-                                        'ar' => $value->getTranslation('value', 'ar'),
-                                    ],
-                                    'variant_type' => [
-                                        'id' => $value->variantType->id,
-                                        'name' => [
-                                            'en' => $value->variantType->getTranslation('name', 'en'),
-                                            'ar' => $value->variantType->getTranslation('name', 'ar'),
-                                        ],
-                                        'slug' => $value->variantType->slug,
-                                    ],
-                                ];
-                            }),
-                        ];
-                    }),
-                ];
-            }),
+            'categories' => CategoryResource::collection($categories)->resolve(),
+            'products' => ProductResource::collection($products)->resolve(),
             'variantTypes' => $variantTypes,
             'filters' => $filters,
         ]);
@@ -87,20 +55,7 @@ class ProductController extends Controller
         $product->load(['category', 'primaryVariant']);
 
         return Inertia::render('ProductDetailPage', [
-            'product' => [
-                'id' => $product->id,
-                'name' => $product->name,
-                'description' => $product->description,
-                'price' => $product->primaryVariant?->price ?? 0,
-                'stock' => $product->primaryVariant?->stock ?? 0,
-                'image_url' => $product->image_url,
-                'preview_url' => $product->preview_url,
-                'category' => [
-                    'id' => $product->category->id,
-                    'name' => $product->category->name,
-                    'slug' => $product->category->slug,
-                ],
-            ],
+            'product' => (new ProductResource($product))->resolve(),
         ]);
     }
 
@@ -116,31 +71,7 @@ class ProductController extends Controller
         }
 
         return response()->json([
-            'variants' => $product->productVariants->map(function ($variant) {
-                return [
-                    'id' => $variant->id,
-                    'price' => $variant->price,
-                    'stock' => $variant->stock,
-                    'display_name' => $variant->display_name,
-                    'variant_values' => $variant->variantValues->map(function ($value) {
-                        return [
-                            'id' => $value->id,
-                            'value' => [
-                                'en' => $value->getTranslation('value', 'en'),
-                                'ar' => $value->getTranslation('value', 'ar'),
-                            ],
-                            'variant_type' => [
-                                'id' => $value->variantType->id,
-                                'name' => [
-                                    'en' => $value->variantType->getTranslation('name', 'en'),
-                                    'ar' => $value->variantType->getTranslation('name', 'ar'),
-                                ],
-                                'slug' => $value->variantType->slug,
-                            ],
-                        ];
-                    }),
-                ];
-            }),
+            'variants' => ProductVariantResource::collection($product->productVariants)->resolve(),
         ]);
     }
 }

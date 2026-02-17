@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\CreateProductRequest;
 use App\Http\Requests\Admin\UpdateProductRequest;
+use App\Http\Resources\ProductResource;
 use App\Models\Product;
 use App\Services\Admin\ProductService;
 use Illuminate\Http\JsonResponse;
@@ -34,33 +35,7 @@ class ProductController extends Controller
 
         return response()->json([
             'success' => true,
-            'products' => $products->map(function ($product) {
-                return [
-                    'id' => $product->id,
-                    'name' => [
-                        'en' => $product->getTranslation('name', 'en'),
-                        'ar' => $product->getTranslation('name', 'ar'),
-                    ],
-                    'description' => [
-                        'en' => $product->getTranslation('description', 'en', false) ?? '',
-                        'ar' => $product->getTranslation('description', 'ar', false) ?? '',
-                    ],
-                    'price' => $product->primaryVariant?->price ?? 0,
-                    'stock' => $product->primaryVariant?->stock ?? 0,
-                    'variant_count' => $product->productVariants->count(),
-                    'category_id' => $product->category_id,
-                    'category' => [
-                        'id' => $product->category->id,
-                        'name' => [
-                            'en' => $product->category->getTranslation('name', 'en'),
-                            'ar' => $product->category->getTranslation('name', 'ar'),
-                        ],
-                        'slug' => $product->category->slug,
-                    ],
-                    'image_url' => $product->image_url,
-                    'thumb_url' => $product->thumb_url,
-                ];
-            }),
+            'products' => ProductResource::collection($products),
         ]);
     }
 
@@ -70,18 +45,11 @@ class ProductController extends Controller
     public function store(CreateProductRequest $request): JsonResponse
     {
         $product = $this->productService->createProduct($request->validated());
+        $product->load(['category', 'primaryVariant']);
 
         return response()->json([
             'success' => true,
-            'product' => [
-                'id' => $product->id,
-                'name' => $product->name,
-                'description' => $product->description,
-                'price' => $product->primaryVariant?->price ?? 0,
-                'stock' => $product->primaryVariant?->stock ?? 0,
-                'category_id' => $product->category_id,
-                'image_url' => $product->image_url,
-            ],
+            'product' => new ProductResource($product),
         ], 201);
     }
 
@@ -99,17 +67,11 @@ class ProductController extends Controller
             ], 404);
         }
 
+        $product->load(['category', 'primaryVariant']);
+
         return response()->json([
             'success' => true,
-            'product' => [
-                'id' => $product->id,
-                'name' => $product->name,
-                'description' => $product->description,
-                'price' => $product->primaryVariant?->price ?? 0,
-                'stock' => $product->primaryVariant?->stock ?? 0,
-                'category_id' => $product->category_id,
-                'image_url' => $product->image_url,
-            ],
+            'product' => new ProductResource($product),
         ]);
     }
 

@@ -23,7 +23,7 @@ class ProductSeeder extends Seeder
                 ],
                 'price' => 299.99,
                 'stock' => 50,
-                'category_slug' => 'electronics',
+                'category_name' => 'Electronics',
             ],
             [
                 'name' => ['en' => 'Smart Watch', 'ar' => 'ساعة ذكية'],
@@ -33,7 +33,7 @@ class ProductSeeder extends Seeder
                 ],
                 'price' => 449.99,
                 'stock' => 30,
-                'category_slug' => 'electronics',
+                'category_name' => 'Electronics',
             ],
             [
                 'name' => ['en' => 'USB-C Cable', 'ar' => 'كابل USB-C'],
@@ -43,7 +43,7 @@ class ProductSeeder extends Seeder
                 ],
                 'price' => 19.99,
                 'stock' => 200,
-                'category_slug' => 'electronics',
+                'category_name' => 'Electronics',
             ],
 
             // Clothing
@@ -55,7 +55,7 @@ class ProductSeeder extends Seeder
                 ],
                 'price' => 29.99,
                 'stock' => 100,
-                'category_slug' => 'clothing',
+                'category_name' => 'Clothing',
             ],
             [
                 'name' => ['en' => 'Denim Jeans', 'ar' => 'بنطلون جينز'],
@@ -65,7 +65,7 @@ class ProductSeeder extends Seeder
                 ],
                 'price' => 79.99,
                 'stock' => 60,
-                'category_slug' => 'clothing',
+                'category_name' => 'Clothing',
             ],
 
             // Books
@@ -77,7 +77,7 @@ class ProductSeeder extends Seeder
                 ],
                 'price' => 49.99,
                 'stock' => 40,
-                'category_slug' => 'books',
+                'category_name' => 'Books',
             ],
             [
                 'name' => ['en' => 'History of Art', 'ar' => 'تاريخ الفن'],
@@ -87,7 +87,7 @@ class ProductSeeder extends Seeder
                 ],
                 'price' => 59.99,
                 'stock' => 25,
-                'category_slug' => 'books',
+                'category_name' => 'Books',
             ],
 
             // Home & Garden
@@ -99,7 +99,7 @@ class ProductSeeder extends Seeder
                 ],
                 'price' => 89.99,
                 'stock' => 35,
-                'category_slug' => 'home-garden',
+                'category_name' => 'Home & Garden',
             ],
             [
                 'name' => ['en' => 'LED Desk Lamp', 'ar' => 'مصباح مكتب LED'],
@@ -109,7 +109,7 @@ class ProductSeeder extends Seeder
                 ],
                 'price' => 39.99,
                 'stock' => 70,
-                'category_slug' => 'home-garden',
+                'category_name' => 'Home & Garden',
             ],
 
             // Sports
@@ -121,12 +121,12 @@ class ProductSeeder extends Seeder
                 ],
                 'price' => 34.99,
                 'stock' => 80,
-                'category_slug' => 'sports',
+                'category_name' => 'Sports',
             ],
         ];
 
         foreach ($products as $productData) {
-            $category = Category::where('slug', $productData['category_slug'])->first();
+            $category = Category::where('name->en', $productData['category_name'])->first();
 
             if ($category) {
                 $product = Product::create([

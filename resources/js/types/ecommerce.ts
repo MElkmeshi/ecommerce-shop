@@ -1,7 +1,6 @@
 export interface VariantType {
   id: number;
   name: { en: string; ar: string };
-  slug: string;
   variant_values: VariantValue[];
 }
 
@@ -35,14 +34,12 @@ export interface Product {
   category: {
     id: number;
     name: string;
-    slug: string;
   };
 }
 
 export interface Category {
   id: number;
   name: string;
-  slug: string;
 }
 
 export interface Order {

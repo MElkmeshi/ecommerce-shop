@@ -21,7 +21,6 @@ import AdminLayout from '@/layouts/admin-layout';
 interface Category {
   id: number;
   name: { en: string; ar: string };
-  slug: string;
 }
 
 function CategoriesPage() {
@@ -34,7 +33,6 @@ function CategoriesPage() {
   // Form state
   const [nameEn, setNameEn] = useState('');
   const [nameAr, setNameAr] = useState('');
-  const [slug, setSlug] = useState('');
 
   useEffect(() => {
     fetchCategories();
@@ -51,17 +49,12 @@ function CategoriesPage() {
     }
   };
 
-  const generateSlug = (text: string) => {
-    return text.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-  };
-
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
 
     try {
       await axios.post('/admin/api/categories', {
         name: { en: nameEn, ar: nameAr },
-        slug: slug || generateSlug(nameEn),
       });
       toast.success('Category created successfully');
       setIsCreateOpen(false);
@@ -79,7 +72,6 @@ function CategoriesPage() {
     try {
       await axios.put(`/admin/api/categories/${currentCategory.id}`, {
         name: { en: nameEn, ar: nameAr },
-        slug: slug,
       });
       toast.success('Category updated successfully');
       setIsEditOpen(false);
@@ -106,14 +98,12 @@ function CategoriesPage() {
     setCurrentCategory(category);
     setNameEn(category.name.en);
     setNameAr(category.name.ar);
-    setSlug(category.slug);
     setIsEditOpen(true);
   };
 
   const resetForm = () => {
     setNameEn('');
     setNameAr('');
-    setSlug('');
     setCurrentCategory(null);
   };
 
@@ -150,7 +140,6 @@ function CategoriesPage() {
                     <tr className="border-b text-left">
                       <th className="pb-3 font-semibold">Name (English)</th>
                       <th className="pb-3 font-semibold">Name (Arabic)</th>
-                      <th className="pb-3 font-semibold">Slug</th>
                       <th className="pb-3 font-semibold">Actions</th>
                     </tr>
                   </thead>
@@ -159,9 +148,6 @@ function CategoriesPage() {
                       <tr key={category.id} className="border-b">
                         <td className="py-3">{category.name.en}</td>
                         <td className="py-3">{category.name.ar}</td>
-                        <td className="py-3">
-                          <Badge variant="secondary">{category.slug}</Badge>
-                        </td>
                         <td className="py-3">
                           <div className="flex gap-2">
                             <Button
@@ -203,10 +189,7 @@ function CategoriesPage() {
                   <Input
                     id="nameEn"
                     value={nameEn}
-                    onChange={(e) => {
-                      setNameEn(e.target.value);
-                      if (!slug) setSlug(generateSlug(e.target.value));
-                    }}
+                    onChange={(e) => setNameEn(e.target.value)}
                     required
                   />
                 </div>
@@ -218,18 +201,6 @@ function CategoriesPage() {
                     onChange={(e) => setNameAr(e.target.value)}
                     required
                   />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="slug">Slug</Label>
-                  <Input
-                    id="slug"
-                    value={slug}
-                    onChange={(e) => setSlug(generateSlug(e.target.value))}
-                    required
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    URL-friendly identifier (lowercase, hyphens)
-                  </p>
                 </div>
               </div>
               <DialogFooter>
@@ -266,15 +237,6 @@ function CategoriesPage() {
                     id="editNameAr"
                     value={nameAr}
                     onChange={(e) => setNameAr(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="editSlug">Slug</Label>
-                  <Input
-                    id="editSlug"
-                    value={slug}
-                    onChange={(e) => setSlug(generateSlug(e.target.value))}
                     required
                   />
                 </div>

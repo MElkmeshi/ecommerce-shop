@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\CategoryResource;
 use App\Models\Category;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -21,7 +21,9 @@ class CategoryController extends Controller
     {
         $categories = Category::orderBy('created_at', 'desc')->get();
 
-        return response()->json($categories);
+        return response()->json([
+            'data' => CategoryResource::collection($categories),
+        ]);
     }
 
     public function store(Request $request): JsonResponse
@@ -29,18 +31,15 @@ class CategoryController extends Controller
         $validated = $request->validate([
             'name.en' => 'required|string|max:255',
             'name.ar' => 'required|string|max:255',
-            'slug' => 'nullable|string|max:255|unique:categories,slug',
         ]);
-
-        // Auto-generate slug if not provided
-        $slug = $validated['slug'] ?? Str::slug($validated['name']['en']);
 
         $category = Category::create([
             'name' => $validated['name'],
-            'slug' => $slug,
         ]);
 
-        return response()->json($category, 201);
+        return response()->json([
+            'data' => new CategoryResource($category),
+        ], 201);
     }
 
     public function update(Request $request, int $id): JsonResponse
@@ -50,12 +49,13 @@ class CategoryController extends Controller
         $validated = $request->validate([
             'name.en' => 'required|string|max:255',
             'name.ar' => 'required|string|max:255',
-            'slug' => 'required|string|max:255|unique:categories,slug,'.$id,
         ]);
 
         $category->update($validated);
 
-        return response()->json($category);
+        return response()->json([
+            'data' => new CategoryResource($category),
+        ]);
     }
 
     public function destroy(int $id): JsonResponse
