@@ -32,9 +32,15 @@ interface Category {
     name: string | { en: string; ar: string };
 }
 
+interface Brand {
+    id: number;
+    name: string | { en: string; ar: string };
+}
+
 interface Props {
     products: Product[];
     categories: Category[];
+    brands: Brand[];
     variantTypes: VariantType[];
     filters: any;
     user?: {
@@ -46,6 +52,7 @@ interface Props {
 export default function ProductsPage({
     products,
     categories,
+    brands,
     variantTypes,
     filters,
     user,
@@ -53,6 +60,9 @@ export default function ProductsPage({
     const [search, setSearch] = useState(filters.search || '');
     const [selectedCategory, setSelectedCategory] = useState<number | null>(
         filters.category || null,
+    );
+    const [selectedBrand, setSelectedBrand] = useState<number | null>(
+        filters.brand || null,
     );
     const [selectedVariantValues, setSelectedVariantValues] = useState<
         number[]
@@ -73,6 +83,20 @@ export default function ProductsPage({
         router.visit('/', {
             data: {
                 category: categoryId,
+                brand: selectedBrand,
+                search: search || undefined,
+            },
+            preserveState: true,
+            preserveScroll: true,
+        });
+    };
+
+    const handleBrandChange = (brandId: number | null) => {
+        setSelectedBrand(brandId);
+        router.visit('/', {
+            data: {
+                category: selectedCategory,
+                brand: brandId,
                 search: search || undefined,
             },
             preserveState: true,
@@ -299,6 +323,7 @@ export default function ProductsPage({
                 </div>
                 {/* Mobile Filter Toggle Button */}
                 {(categories.length > 0 ||
+                    brands.length > 0 ||
                     (variantTypes && variantTypes.length > 0)) && (
                     <Button
                         variant="outline"
@@ -308,9 +333,11 @@ export default function ProductsPage({
                     >
                         <Filter className="h-4 w-4" />
                         {(selectedCategory ||
+                            selectedBrand ||
                             selectedVariantValues.length > 0) && (
                             <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
                                 {(selectedCategory ? 1 : 0) +
+                                    (selectedBrand ? 1 : 0) +
                                     selectedVariantValues.length}
                             </span>
                         )}
@@ -319,7 +346,7 @@ export default function ProductsPage({
             </div>
 
             {/* Active Filters (Mobile & Desktop) */}
-            {(selectedCategory || selectedVariantValues.length > 0) && (
+            {(selectedCategory || selectedBrand || selectedVariantValues.length > 0) && (
                 <div className="mb-4 flex flex-wrap items-center gap-2">
                     <span className="text-sm font-medium text-muted-foreground">
                         Active Filters:
@@ -341,6 +368,29 @@ export default function ProductsPage({
                                   )?.name}
                             <button
                                 onClick={() => handleCategoryChange(null)}
+                                className="ml-1 rounded-full hover:bg-muted-foreground/20"
+                            >
+                                <X className="h-3 w-3" />
+                            </button>
+                        </Badge>
+                    )}
+                    {selectedBrand && (
+                        <Badge variant="secondary" className="gap-1 pr-1">
+                            {brands.find((b) => b.id === selectedBrand)
+                                ?.name &&
+                            typeof brands.find(
+                                (b) => b.id === selectedBrand,
+                            )?.name === 'object'
+                                ? (
+                                      brands.find(
+                                          (b) => b.id === selectedBrand,
+                                      )?.name as { en: string; ar: string }
+                                  ).en
+                                : brands.find(
+                                      (b) => b.id === selectedBrand,
+                                  )?.name}
+                            <button
+                                onClick={() => handleBrandChange(null)}
                                 className="ml-1 rounded-full hover:bg-muted-foreground/20"
                             >
                                 <X className="h-3 w-3" />
@@ -378,6 +428,7 @@ export default function ProductsPage({
                         size="sm"
                         onClick={() => {
                             setSelectedVariantValues([]);
+                            setSelectedBrand(null);
                             handleCategoryChange(null);
                         }}
                         className="h-6 text-xs"
@@ -389,6 +440,7 @@ export default function ProductsPage({
 
             {/* Mobile Filter Section */}
             {(categories.length > 0 ||
+                brands.length > 0 ||
                 (variantTypes && variantTypes.length > 0)) &&
                 isFilterOpen && (
                     <Card className="mb-6 lg:hidden">
@@ -448,6 +500,50 @@ export default function ProductsPage({
                                 </div>
                             )}
 
+                            {/* Brands Filter */}
+                            {brands.length > 0 && (
+                                <div className="space-y-2">
+                                    <h3 className="text-sm font-semibold">
+                                        Brands
+                                    </h3>
+                                    <div className="space-y-1">
+                                        <button
+                                            onClick={() =>
+                                                handleBrandChange(null)
+                                            }
+                                            className={`w-full rounded px-2 py-1.5 text-left text-sm transition-colors ${
+                                                !selectedBrand
+                                                    ? 'bg-primary text-primary-foreground'
+                                                    : 'hover:bg-muted'
+                                            }`}
+                                        >
+                                            All Brands
+                                        </button>
+                                        {brands.map((brand) => (
+                                            <button
+                                                key={brand.id}
+                                                onClick={() =>
+                                                    handleBrandChange(
+                                                        brand.id,
+                                                    )
+                                                }
+                                                className={`w-full rounded px-2 py-1.5 text-left text-sm transition-colors ${
+                                                    selectedBrand ===
+                                                    brand.id
+                                                        ? 'bg-primary text-primary-foreground'
+                                                        : 'hover:bg-muted'
+                                                }`}
+                                            >
+                                                {typeof brand.name ===
+                                                'object'
+                                                    ? brand.name.en
+                                                    : brand.name}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Variant Filters */}
                             {variantTypes &&
                                 variantTypes.map((variantType) => (
@@ -495,6 +591,7 @@ export default function ProductsPage({
             <div className="flex gap-6">
                 {/* Desktop Filters Sidebar */}
                 {(categories.length > 0 ||
+                    brands.length > 0 ||
                     (variantTypes && variantTypes.length > 0)) && (
                     <aside className="hidden w-64 shrink-0 lg:block">
                         <Card>
@@ -542,6 +639,50 @@ export default function ProductsPage({
                                                     'object'
                                                         ? category.name.en
                                                         : category.name}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Brands Filter */}
+                                {brands.length > 0 && (
+                                    <div className="space-y-2">
+                                        <h3 className="text-sm font-semibold">
+                                            Brands
+                                        </h3>
+                                        <div className="space-y-1">
+                                            <button
+                                                onClick={() =>
+                                                    handleBrandChange(null)
+                                                }
+                                                className={`w-full rounded px-2 py-1.5 text-left text-sm transition-colors ${
+                                                    !selectedBrand
+                                                        ? 'bg-primary text-primary-foreground'
+                                                        : 'hover:bg-muted'
+                                                }`}
+                                            >
+                                                All Brands
+                                            </button>
+                                            {brands.map((brand) => (
+                                                <button
+                                                    key={brand.id}
+                                                    onClick={() =>
+                                                        handleBrandChange(
+                                                            brand.id,
+                                                        )
+                                                    }
+                                                    className={`w-full rounded px-2 py-1.5 text-left text-sm transition-colors ${
+                                                        selectedBrand ===
+                                                        brand.id
+                                                            ? 'bg-primary text-primary-foreground'
+                                                            : 'hover:bg-muted'
+                                                    }`}
+                                                >
+                                                    {typeof brand.name ===
+                                                    'object'
+                                                        ? brand.name.en
+                                                        : brand.name}
                                                 </button>
                                             ))}
                                         </div>

@@ -31,6 +31,7 @@ class UpdateProductRequest extends FormRequest
             'price' => 'sometimes|numeric|min:0',
             'stock' => 'sometimes|integer|min:0',
             'categoryId' => 'sometimes|integer|exists:categories,id',
+            'brandId' => 'nullable|integer|exists:brands,id',
             'image' => 'nullable|image|max:5120', // Max 5MB
         ];
     }
@@ -48,6 +49,7 @@ class UpdateProductRequest extends FormRequest
             'description.en' => 'English description',
             'description.ar' => 'Arabic description',
             'categoryId' => 'category',
+            'brandId' => 'brand',
         ];
     }
 }

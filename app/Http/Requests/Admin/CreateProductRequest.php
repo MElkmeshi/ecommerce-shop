@@ -31,6 +31,7 @@ class CreateProductRequest extends FormRequest
             'price' => 'required|numeric|min:0',
             'stock' => 'required|integer|min:0',
             'categoryId' => 'required|integer|exists:categories,id',
+            'brandId' => 'nullable|integer|exists:brands,id',
             'image' => 'nullable|image|max:5120', // Max 5MB
         ];
     }
@@ -48,6 +49,7 @@ class CreateProductRequest extends FormRequest
             'description.en' => 'English description',
             'description.ar' => 'Arabic description',
             'categoryId' => 'category',
+            'brandId' => 'brand',
         ];
     }
 }

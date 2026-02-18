@@ -32,6 +32,7 @@ class Product extends Model implements HasMedia
         'name',
         'description',
         'category_id',
+        'brand_id',
     ];
 
     /**
@@ -70,6 +71,14 @@ class Product extends Model implements HasMedia
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
+    }
+
+    /**
+     * Get the brand that owns the product.
+     */
+    public function brand(): BelongsTo
+    {
+        return $this->belongsTo(Brand::class);
     }
 
     /**

@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\GetProductsRequest;
+use App\Http\Resources\BrandResource;
 use App\Http\Resources\CategoryResource;
 use App\Http\Resources\ProductResource;
 use App\Http\Resources\ProductVariantResource;
+use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
 use App\Services\ProductService;
@@ -33,6 +35,7 @@ class ProductController extends Controller
         $products = $this->productService->getProducts($filters);
         $variantTypes = $this->variantTypeService->getAllVariantTypes();
         $categories = Category::query()->get();
+        $brands = Brand::query()->orderBy('name->en')->get();
         $telegramUser = $request->input('telegram_user');
 
         return Inertia::render('ProductsPage', [
@@ -41,6 +44,7 @@ class ProductController extends Controller
                 'username' => $telegramUser['username'] ?? null,
             ] : null,
             'categories' => CategoryResource::collection($categories)->resolve(),
+            'brands' => BrandResource::collection($brands)->resolve(),
             'products' => ProductResource::collection($products)->resolve(),
             'variantTypes' => $variantTypes,
             'filters' => $filters,

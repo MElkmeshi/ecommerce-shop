@@ -24,6 +24,7 @@ class GetProductsRequest extends FormRequest
         return [
             'search' => 'nullable|string|max:255',
             'category' => 'nullable|integer|exists:categories,id',
+            'brand' => 'nullable|integer|exists:brands,id',
             'minPrice' => 'nullable|numeric|min:0',
             'maxPrice' => 'nullable|numeric|min:0',
             'sort' => 'nullable|in:name,price-asc,price-desc,newest',

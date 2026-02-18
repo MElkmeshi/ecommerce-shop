@@ -28,6 +28,11 @@ class ProductService
             $query->where('category_id', $filters['category']);
         }
 
+        // Filter by brand ID
+        if (! empty($filters['brand'])) {
+            $query->where('brand_id', $filters['brand']);
+        }
+
         // Filter by variant values
         if (! empty($filters['variantValues']) && is_array($filters['variantValues'])) {
             $query->whereHas('productVariants.variantValues', function ($q) use ($filters) {

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AuthController as AdminAuthController;
+use App\Http\Controllers\Admin\BrandController as AdminBrandController;
 use App\Http\Controllers\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
@@ -29,6 +30,7 @@ Route::get('/checkout', [CartController::class, 'checkout'])->name('checkout');
 
 // API Routes (for AJAX calls)
 Route::get('/api/categories', [CategoryController::class, 'apiIndex'])->name('api.categories');
+Route::get('/api/brands', [\App\Http\Controllers\BrandController::class, 'apiIndex'])->name('api.brands');
 Route::get('/api/variant-types', [VariantTypeController::class, 'index'])->name('api.variant-types');
 Route::get('/api/products/{id}/variants', [ProductController::class, 'getVariants'])->name('api.products.variants');
 Route::post('/api/calculate-delivery-fee', [OrderController::class, 'calculateDeliveryFee'])->name('api.calculate-delivery-fee');
@@ -61,6 +63,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // Admin Pages
         Route::get('/products', [AdminProductController::class, 'index'])->name('products.index');
         Route::get('/categories', [AdminCategoryController::class, 'index'])->name('categories.index');
+        Route::get('/brands', [AdminBrandController::class, 'index'])->name('brands.index');
         Route::get('/variant-types', [AdminVariantTypeController::class, 'index'])->name('variant-types.index');
         Route::get('/orders', [AdminOrderController::class, 'index'])->name('orders.index');
         Route::get('/stock-management', [AdminStockManagementController::class, 'index'])->name('stock-management.index');
@@ -76,6 +79,12 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/api/categories', [AdminCategoryController::class, 'store'])->name('api.categories.store');
         Route::put('/api/categories/{id}', [AdminCategoryController::class, 'update'])->name('api.categories.update');
         Route::delete('/api/categories/{id}', [AdminCategoryController::class, 'destroy'])->name('api.categories.destroy');
+
+        // Brand Management API
+        Route::get('/api/brands', [AdminBrandController::class, 'apiIndex'])->name('api.brands.index');
+        Route::post('/api/brands', [AdminBrandController::class, 'store'])->name('api.brands.store');
+        Route::put('/api/brands/{id}', [AdminBrandController::class, 'update'])->name('api.brands.update');
+        Route::delete('/api/brands/{id}', [AdminBrandController::class, 'destroy'])->name('api.brands.destroy');
 
         // Variant Type Management API
         Route::get('/api/variant-types', [AdminVariantTypeController::class, 'apiIndex'])->name('api.variant-types.index');

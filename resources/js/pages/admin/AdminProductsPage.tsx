@@ -54,6 +54,11 @@ interface Product {
     id: number;
     name: { en: string; ar: string };
   };
+  brand_id?: number;
+  brand?: {
+    id: number;
+    name: { en: string; ar: string };
+  };
   image_url?: string;
   thumb_url?: string;
 }
@@ -63,9 +68,15 @@ interface Category {
   name: { en: string; ar: string };
 }
 
+interface Brand {
+  id: number;
+  name: { en: string; ar: string };
+}
+
 function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [brands, setBrands] = useState<Brand[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -79,6 +90,7 @@ function AdminProductsPage() {
   const [price, setPrice] = useState('');
   const [stock, setStock] = useState('');
   const [categoryId, setCategoryId] = useState('');
+  const [brandId, setBrandId] = useState('');
   const [image, setImage] = useState<File | null>(null);
 
   // Variant management state
@@ -97,6 +109,7 @@ function AdminProductsPage() {
   useEffect(() => {
     fetchProducts();
     fetchCategories();
+    fetchBrands();
   }, []);
 
   const fetchProducts = async () => {
@@ -116,6 +129,15 @@ function AdminProductsPage() {
       setCategories(response.data);
     } catch (error) {
       console.error('Failed to fetch categories');
+    }
+  };
+
+  const fetchBrands = async () => {
+    try {
+      const response = await axios.get('/api/brands');
+      setBrands(response.data.data);
+    } catch (error) {
+      console.error('Failed to fetch brands');
     }
   };
 
@@ -147,6 +169,7 @@ function AdminProductsPage() {
     formData.append('price', price);
     formData.append('stock', stock);
     formData.append('categoryId', categoryId);
+    if (brandId) formData.append('brandId', brandId);
     if (image) formData.append('image', image);
 
     try {
@@ -174,6 +197,7 @@ function AdminProductsPage() {
     formData.append('price', price);
     formData.append('stock', stock);
     formData.append('categoryId', categoryId);
+    if (brandId) formData.append('brandId', brandId);
     if (image) formData.append('image', image);
     formData.append('_method', 'PUT');
 
@@ -220,6 +244,7 @@ function AdminProductsPage() {
     setPrice(product.price.toString());
     setStock(product.stock.toString());
     setCategoryId(product.category_id.toString());
+    setBrandId(product.brand_id?.toString() || '');
     setIsEditOpen(true);
   };
 
@@ -231,6 +256,7 @@ function AdminProductsPage() {
     setPrice('');
     setStock('');
     setCategoryId('');
+    setBrandId('');
     setImage(null);
     setCurrentProduct(null);
   };
@@ -525,6 +551,22 @@ function AdminProductsPage() {
                   </select>
                 </div>
                 <div className="grid gap-2">
+                  <Label htmlFor="brand">Brand (Optional)</Label>
+                  <select
+                    id="brand"
+                    value={brandId}
+                    onChange={(e) => setBrandId(e.target.value)}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2"
+                  >
+                    <option value="">Select brand (optional)</option>
+                    {brands.map((brand) => (
+                      <option key={brand.id} value={brand.id}>
+                        {typeof brand.name === 'object' ? brand.name.en : brand.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="grid gap-2">
                   <Label htmlFor="image">Image</Label>
                   <Input
                     id="image"
@@ -631,6 +673,22 @@ function AdminProductsPage() {
                     {categories.map((cat) => (
                       <option key={cat.id} value={cat.id}>
                         {typeof cat.name === 'object' ? cat.name.en : cat.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="editBrand">Brand (Optional)</Label>
+                  <select
+                    id="editBrand"
+                    value={brandId}
+                    onChange={(e) => setBrandId(e.target.value)}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2"
+                  >
+                    <option value="">Select brand (optional)</option>
+                    {brands.map((brand) => (
+                      <option key={brand.id} value={brand.id}>
+                        {typeof brand.name === 'object' ? brand.name.en : brand.name}
                       </option>
                     ))}
                   </select>

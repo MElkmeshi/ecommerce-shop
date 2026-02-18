@@ -26,6 +26,7 @@ class ProductService
                 'name' => $data['name'],
                 'description' => $data['description'] ?? null,
                 'category_id' => $data['categoryId'],
+                'brand_id' => $data['brandId'] ?? null,
             ]);
 
             // Create initial variant with provided price/stock
@@ -68,6 +69,10 @@ class ProductService
 
             if (isset($data['categoryId'])) {
                 $productUpdateData['category_id'] = $data['categoryId'];
+            }
+
+            if (isset($data['brandId'])) {
+                $productUpdateData['brand_id'] = $data['brandId'];
             }
 
             if (! empty($productUpdateData)) {
