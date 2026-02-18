@@ -1,13 +1,13 @@
 export interface VariantType {
   id: number;
-  name: { en: string; ar: string };
+  name: string; // Translated by backend based on locale
   variant_values: VariantValue[];
 }
 
 export interface VariantValue {
   id: number;
   variant_type_id: number;
-  value: { en: string; ar: string };
+  value: string; // Translated by backend based on locale
   variant_type?: VariantType;
 }
 
@@ -22,8 +22,8 @@ export interface ProductVariant {
 
 export interface Product {
   id: number;
-  name: string;
-  description?: string;
+  name: string; // Translated by backend based on locale
+  description?: string; // Translated by backend based on locale
   price?: number; // Display price from primary variant
   image_url?: string;
   thumb_url?: string;
@@ -31,15 +31,26 @@ export interface Product {
   stock?: number; // Display stock from primary variant
   variant_count?: number; // Number of variants
   product_variants?: ProductVariant[];
+  category_id: number;
   category: {
     id: number;
-    name: string;
+    name: string; // Translated by backend based on locale
+  };
+  brand_id?: number;
+  brand?: {
+    id: number;
+    name: string; // Translated by backend based on locale
   };
 }
 
 export interface Category {
   id: number;
-  name: string;
+  name: string; // Translated by backend based on locale
+}
+
+export interface Brand {
+  id: number;
+  name: string; // Translated by backend based on locale
 }
 
 export interface Order {

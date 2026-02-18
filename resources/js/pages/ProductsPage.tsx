@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { useCartStore } from '@/store/cartStore';
-import type { Product, VariantType, ProductVariant } from '@/types/ecommerce';
+import type { Product, VariantType, ProductVariant, Category, Brand } from '@/types';
 import {
     ShoppingCart,
     Search,
@@ -26,16 +26,6 @@ import {
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { router } from '@inertiajs/react';
-
-interface Category {
-    id: number;
-    name: string | { en: string; ar: string };
-}
-
-interface Brand {
-    id: number;
-    name: string | { en: string; ar: string };
-}
 
 interface Props {
     products: Product[];
@@ -167,7 +157,7 @@ export default function ProductsPage({
         addItem({
             productId: product.id,
             productVariantId: variant.id,
-            name: typeof product.name === 'string' ? product.name : product.name?.en || 'Product',
+            name: product.name,
             variantDisplay: variant.display_name,
             price: variant.price,
             imageUrl: product.thumb_url,
@@ -181,72 +171,20 @@ export default function ProductsPage({
         if (search.trim()) {
             const searchLower = search.toLowerCase();
 
-            // Search in product name (en and ar)
-            const nameMatch =
-                (typeof product.name === 'string' &&
-                    product.name.toLowerCase().includes(searchLower)) ||
-                (typeof product.name === 'object' &&
-                    product.name &&
-                    (product.name.en?.toLowerCase().includes(searchLower) ||
-                        product.name.ar?.toLowerCase().includes(searchLower)));
+            // Search in product name
+            const nameMatch = product.name?.toLowerCase().includes(searchLower);
 
-            // Search in product description (en and ar)
-            const descMatch =
-                (typeof product.description === 'string' &&
-                    product.description.toLowerCase().includes(searchLower)) ||
-                (typeof product.description === 'object' &&
-                    product.description &&
-                    (product.description.en
-                        ?.toLowerCase()
-                        .includes(searchLower) ||
-                        product.description.ar
-                            ?.toLowerCase()
-                            .includes(searchLower)));
+            // Search in product description
+            const descMatch = product.description?.toLowerCase().includes(searchLower);
 
-            // Search in category name (en and ar)
-            const categoryMatch =
-                (typeof product.category?.name === 'string' &&
-                    product.category.name
-                        .toLowerCase()
-                        .includes(searchLower)) ||
-                (typeof product.category?.name === 'object' &&
-                    product.category.name &&
-                    (product.category.name.en
-                        ?.toLowerCase()
-                        .includes(searchLower) ||
-                        product.category.name.ar
-                            ?.toLowerCase()
-                            .includes(searchLower)));
+            // Search in category name
+            const categoryMatch = product.category?.name?.toLowerCase().includes(searchLower);
 
             // Search in variant types and values
             const variantMatch = product.product_variants?.some((variant) =>
                 variant.variant_values?.some((value) => {
-                    const valueMatch =
-                        (typeof value.value === 'string' &&
-                            value.value.toLowerCase().includes(searchLower)) ||
-                        (typeof value.value === 'object' &&
-                            value.value &&
-                            (value.value.en
-                                ?.toLowerCase()
-                                .includes(searchLower) ||
-                                value.value.ar
-                                    ?.toLowerCase()
-                                    .includes(searchLower)));
-
-                    const typeMatch =
-                        (typeof value.variant_type?.name === 'string' &&
-                            value.variant_type.name
-                                .toLowerCase()
-                                .includes(searchLower)) ||
-                        (typeof value.variant_type?.name === 'object' &&
-                            value.variant_type.name &&
-                            (value.variant_type.name.en
-                                ?.toLowerCase()
-                                .includes(searchLower) ||
-                                value.variant_type.name.ar
-                                    ?.toLowerCase()
-                                    .includes(searchLower)));
-
+                    const valueMatch = value.value?.toLowerCase().includes(searchLower);
+                    const typeMatch = value.variant_type?.name?.toLowerCase().includes(searchLower);
                     return valueMatch || typeMatch;
                 }),
             );
@@ -353,19 +291,7 @@ export default function ProductsPage({
                     </span>
                     {selectedCategory && (
                         <Badge variant="secondary" className="gap-1 pr-1">
-                            {categories.find((c) => c.id === selectedCategory)
-                                ?.name &&
-                            typeof categories.find(
-                                (c) => c.id === selectedCategory,
-                            )?.name === 'object'
-                                ? (
-                                      categories.find(
-                                          (c) => c.id === selectedCategory,
-                                      )?.name as { en: string; ar: string }
-                                  ).en
-                                : categories.find(
-                                      (c) => c.id === selectedCategory,
-                                  )?.name}
+                            {categories.find((c) => c.id === selectedCategory)?.name}
                             <button
                                 onClick={() => handleCategoryChange(null)}
                                 className="ml-1 rounded-full hover:bg-muted-foreground/20"
@@ -376,19 +302,7 @@ export default function ProductsPage({
                     )}
                     {selectedBrand && (
                         <Badge variant="secondary" className="gap-1 pr-1">
-                            {brands.find((b) => b.id === selectedBrand)
-                                ?.name &&
-                            typeof brands.find(
-                                (b) => b.id === selectedBrand,
-                            )?.name === 'object'
-                                ? (
-                                      brands.find(
-                                          (b) => b.id === selectedBrand,
-                                      )?.name as { en: string; ar: string }
-                                  ).en
-                                : brands.find(
-                                      (b) => b.id === selectedBrand,
-                                  )?.name}
+                            {brands.find((b) => b.id === selectedBrand)?.name}
                             <button
                                 onClick={() => handleBrandChange(null)}
                                 className="ml-1 rounded-full hover:bg-muted-foreground/20"
@@ -411,7 +325,7 @@ export default function ProductsPage({
                                 variant="secondary"
                                 className="gap-1 pr-1"
                             >
-                                {variantValue.value.en}
+                                {variantValue.value}
                                 <button
                                     onClick={() =>
                                         handleVariantValueToggle(valueId)
@@ -490,10 +404,7 @@ export default function ProductsPage({
                                                         : 'hover:bg-muted'
                                                 }`}
                                             >
-                                                {typeof category.name ===
-                                                'object'
-                                                    ? category.name.en
-                                                    : category.name}
+                                                {category.name}
                                             </button>
                                         ))}
                                     </div>
@@ -534,10 +445,7 @@ export default function ProductsPage({
                                                         : 'hover:bg-muted'
                                                 }`}
                                             >
-                                                {typeof brand.name ===
-                                                'object'
-                                                    ? brand.name.en
-                                                    : brand.name}
+                                                {brand.name}
                                             </button>
                                         ))}
                                     </div>
@@ -552,7 +460,7 @@ export default function ProductsPage({
                                         className="space-y-2"
                                     >
                                         <h3 className="text-sm font-semibold">
-                                            {variantType.name.en}
+                                            {variantType.name}
                                         </h3>
                                         <div className="space-y-1">
                                             {variantType.variant_values.map(
@@ -576,7 +484,7 @@ export default function ProductsPage({
                                                             htmlFor={`mobile-filter-${value.id}`}
                                                             className="cursor-pointer text-sm font-normal"
                                                         >
-                                                            {value.value.en}
+                                                            {value.value}
                                                         </Label>
                                                     </div>
                                                 ),
@@ -637,7 +545,7 @@ export default function ProductsPage({
                                                 >
                                                     {typeof category.name ===
                                                     'object'
-                                                        ? category.name.en
+                                                        ? category.name
                                                         : category.name}
                                                 </button>
                                             ))}
@@ -681,7 +589,7 @@ export default function ProductsPage({
                                                 >
                                                     {typeof brand.name ===
                                                     'object'
-                                                        ? brand.name.en
+                                                        ? brand.name
                                                         : brand.name}
                                                 </button>
                                             ))}
@@ -697,7 +605,7 @@ export default function ProductsPage({
                                             className="space-y-2"
                                         >
                                             <h3 className="text-sm font-semibold">
-                                                {variantType.name.en}
+                                                {variantType.name}
                                             </h3>
                                             <div className="space-y-1">
                                                 {variantType.variant_values.map(
@@ -721,7 +629,7 @@ export default function ProductsPage({
                                                                 htmlFor={`filter-${value.id}`}
                                                                 className="cursor-pointer text-sm font-normal"
                                                             >
-                                                                {value.value.en}
+                                                                {value.value}
                                                             </Label>
                                                         </div>
                                                     ),
@@ -772,7 +680,7 @@ export default function ProductsPage({
                                     <div className="aspect-video overflow-hidden rounded-t-lg">
                                         <img
                                             src={product.thumb_url}
-                                            alt={typeof product.name === 'string' ? product.name : product.name?.en || 'Product'}
+                                            alt={product.name}
                                             className="h-full w-full object-cover"
                                         />
                                     </div>
@@ -780,7 +688,7 @@ export default function ProductsPage({
                                 <CardHeader>
                                     <div className="flex items-start justify-between">
                                         <CardTitle className="text-lg">
-                                            {typeof product.name === 'string' ? product.name : product.name?.en || 'Product'}
+                                            {product.name}
                                         </CardTitle>
                                         <Badge
                                             variant={
@@ -795,12 +703,12 @@ export default function ProductsPage({
                                         </Badge>
                                     </div>
                                     <CardDescription>
-                                        {typeof product.category?.name === 'string' ? product.category.name : product.category?.name?.en || 'Category'}
+                                        {product.category?.name}
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-3">
                                     <p className="line-clamp-2 text-sm text-muted-foreground">
-                                        {typeof product.description === 'string' ? product.description : product.description?.en || ''}
+                                        {product.description}
                                     </p>
 
                                     {/* Variant Selection */}
@@ -916,7 +824,7 @@ export default function ProductsPage({
                                                         return (
                                                             <div key={type.id}>
                                                                 <Label className="text-xs font-semibold">
-                                                                    {type?.name?.en || 'Variant Type'}
+                                                                    {type.name}
                                                                 </Label>
                                                                 <div className="mt-1 flex flex-wrap gap-1">
                                                                     {Array.from(
@@ -951,7 +859,7 @@ export default function ProductsPage({
                                                                                     }
                                                                                     className="h-7 text-xs"
                                                                                 >
-                                                                                    {value?.value?.en || 'Option'}
+                                                                                    {value.value}
                                                                                 </Button>
                                                                             );
                                                                         },

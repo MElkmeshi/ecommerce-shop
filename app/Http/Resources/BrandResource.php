@@ -18,10 +18,7 @@ class BrandResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'name' => [
-                'en' => $this->getTranslation('name', 'en'),
-                'ar' => $this->getTranslation('name', 'ar'),
-            ],
+            'name' => $this->name, // Returns translation for current locale
         ];
     }
 }

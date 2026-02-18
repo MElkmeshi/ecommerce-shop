@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\CategoryResource;
+use App\Http\Resources\Admin\CategoryResource;
 use App\Models\Category;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -21,9 +21,7 @@ class CategoryController extends Controller
     {
         $categories = Category::orderBy('created_at', 'desc')->get();
 
-        return response()->json([
-            'data' => CategoryResource::collection($categories),
-        ]);
+        return response()->json(CategoryResource::collection($categories));
     }
 
     public function store(Request $request): JsonResponse

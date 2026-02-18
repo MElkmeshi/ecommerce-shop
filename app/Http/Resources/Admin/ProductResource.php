@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Resources;
+namespace App\Http\Resources\Admin;
 
 use App\Models\Product;
 use Illuminate\Http\Request;
@@ -18,8 +18,14 @@ class ProductResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'name' => $this->name, // Returns translation for current locale
-            'description' => $this->description ?? '', // Returns translation for current locale
+            'name' => [
+                'en' => $this->getTranslation('name', 'en'),
+                'ar' => $this->getTranslation('name', 'ar'),
+            ],
+            'description' => [
+                'en' => $this->getTranslation('description', 'en', false) ?? '',
+                'ar' => $this->getTranslation('description', 'ar', false) ?? '',
+            ],
             'image_url' => $this->image_url,
             'thumb_url' => $this->thumb_url,
             'preview_url' => $this->when($this->preview_url, $this->preview_url),
@@ -30,7 +36,7 @@ class ProductResource extends JsonResource
             'price' => $this->whenLoaded('primaryVariant', fn () => $this->primaryVariant?->price ?? 0),
             'stock' => $this->whenLoaded('primaryVariant', fn () => $this->primaryVariant?->stock ?? 0),
             'variant_count' => $this->whenLoaded('productVariants', fn () => $this->productVariants->count()),
-            'product_variants' => $this->whenLoaded('productVariants', fn () => ProductVariantResource::collection($this->productVariants)->resolve()),
+            'product_variants' => $this->whenLoaded('productVariants', fn () => \App\Http\Resources\ProductVariantResource::collection($this->productVariants)->resolve()),
         ];
     }
 }

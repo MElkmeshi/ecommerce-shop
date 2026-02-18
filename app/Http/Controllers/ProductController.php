@@ -7,6 +7,7 @@ use App\Http\Resources\BrandResource;
 use App\Http\Resources\CategoryResource;
 use App\Http\Resources\ProductResource;
 use App\Http\Resources\ProductVariantResource;
+use App\Http\Resources\VariantTypeResource;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
@@ -46,7 +47,7 @@ class ProductController extends Controller
             'categories' => CategoryResource::collection($categories)->resolve(),
             'brands' => BrandResource::collection($brands)->resolve(),
             'products' => ProductResource::collection($products)->resolve(),
-            'variantTypes' => $variantTypes,
+            'variantTypes' => VariantTypeResource::collection($variantTypes)->resolve(),
             'filters' => $filters,
         ]);
     }

@@ -16,11 +16,7 @@ import { toast } from 'sonner';
 import axios from 'axios';
 import { Pencil, Trash2, Plus } from 'lucide-react';
 import AdminLayout from '@/layouts/admin-layout';
-
-interface Brand {
-  id: number;
-  name: { en: string; ar: string };
-}
+import type { Brand } from '@/types';
 
 function BrandsPage() {
   const [brands, setBrands] = useState<Brand[]>([]);
@@ -40,7 +36,7 @@ function BrandsPage() {
   const fetchBrands = async () => {
     try {
       const response = await axios.get('/admin/api/brands');
-      setBrands(response.data.data);
+      setBrands(response.data);
     } catch (error) {
       toast.error('Failed to fetch brands');
     } finally {

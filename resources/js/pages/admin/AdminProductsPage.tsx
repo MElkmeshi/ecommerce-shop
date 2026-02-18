@@ -18,60 +18,7 @@ import axios from 'axios';
 import { Pencil, Trash2, Plus, Settings, X } from 'lucide-react';
 import AdminLayout from '@/layouts/admin-layout';
 import { Head } from '@inertiajs/react';
-
-interface VariantValue {
-  id: number;
-  value: { en: string; ar: string };
-  variant_type?: {
-    id: number;
-    name: { en: string; ar: string };
-  };
-}
-
-interface ProductVariant {
-  id: number;
-  price: number;
-  stock: number;
-  display_name: string;
-  variant_values: VariantValue[];
-}
-
-interface VariantType {
-  id: number;
-  name: { en: string; ar: string };
-  variant_values: VariantValue[];
-}
-
-interface Product {
-  id: number;
-  name: { en: string; ar: string };
-  description?: { en: string; ar: string };
-  price: number;
-  stock: number;
-  variant_count?: number;
-  category_id: number;
-  category: {
-    id: number;
-    name: { en: string; ar: string };
-  };
-  brand_id?: number;
-  brand?: {
-    id: number;
-    name: { en: string; ar: string };
-  };
-  image_url?: string;
-  thumb_url?: string;
-}
-
-interface Category {
-  id: number;
-  name: { en: string; ar: string };
-}
-
-interface Brand {
-  id: number;
-  name: { en: string; ar: string };
-}
+import type { Product, Category, Brand, VariantType, VariantValue, ProductVariant } from '@/types';
 
 function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);

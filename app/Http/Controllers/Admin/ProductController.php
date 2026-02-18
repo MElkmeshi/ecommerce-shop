@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\CreateProductRequest;
 use App\Http\Requests\Admin\UpdateProductRequest;
-use App\Http\Resources\ProductResource;
+use App\Http\Resources\Admin\ProductResource;
 use App\Models\Product;
 use App\Services\Admin\ProductService;
 use Illuminate\Http\JsonResponse;

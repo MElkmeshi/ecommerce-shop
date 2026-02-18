@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\BrandResource;
+use App\Http\Resources\Admin\BrandResource;
 use App\Models\Brand;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -21,9 +21,7 @@ class BrandController extends Controller
     {
         $brands = Brand::orderBy('created_at', 'desc')->get();
 
-        return response()->json([
-            'data' => BrandResource::collection($brands),
-        ]);
+        return response()->json(BrandResource::collection($brands));
     }
 
     public function store(Request $request): JsonResponse

@@ -1,11 +1,13 @@
 <?php
 
-namespace App\Http\Resources;
+namespace App\Http\Resources\Admin;
 
+use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class VariantValueResource extends JsonResource
+/** @mixin Category */
+class CategoryResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -16,8 +18,10 @@ class VariantValueResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'value' => $this->value, // Returns translation for current locale
-            'variant_type' => $this->whenLoaded('variantType', fn () => (new VariantTypeResource($this->variantType))->resolve()),
+            'name' => [
+                'en' => $this->getTranslation('name', 'en'),
+                'ar' => $this->getTranslation('name', 'ar'),
+            ],
         ];
     }
 }
