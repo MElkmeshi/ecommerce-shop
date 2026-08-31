@@ -9,13 +9,35 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import {
+    InputOTP,
+    InputOTPGroup,
+    InputOTPSlot,
+} from '@/components/ui/input-otp';
 import { useCartStore } from '@/store/cartStore';
-import { useState, useEffect } from 'react';
-import { router } from '@inertiajs/react';
+import { useState, useEffect, useRef } from 'react';
+import { router, usePage } from '@inertiajs/react';
 import { toast } from 'sonner';
 import axios from 'axios';
 import { MapPin, Calculator, Home, Package } from 'lucide-react';
 import { locationManager } from '@tma.js/sdk';
+
+const isTelegramWebApp = (): boolean => {
+    if (typeof window === 'undefined') {
+        return false;
+    }
+    return !!(window as any).Telegram?.WebApp?.initData;
+};
+
+const RESEND_COOLDOWN_SECONDS = 60;
 
 interface CheckoutPageProps {
     creditCardEnabled: boolean;
@@ -49,6 +71,88 @@ export default function CheckoutPage({
     const [hasLocationCoordinates, setHasLocationCoordinates] = useState(false);
     const [showPlusCodeField, setShowPlusCodeField] = useState(false);
     const [processingLink, setProcessingLink] = useState(false);
+
+    const { auth } = usePage().props as unknown as {
+        auth: { user: { id: number } | null };
+    };
+    const [phoneVerified, setPhoneVerified] = useState(false);
+    const [otpDialogOpen, setOtpDialogOpen] = useState(false);
+    const [otpCode, setOtpCode] = useState('');
+    const [otpSending, setOtpSending] = useState(false);
+    const [otpVerifying, setOtpVerifying] = useState(false);
+    const [resendCooldown, setResendCooldown] = useState(0);
+    const cooldownTimerRef = useRef<ReturnType<typeof setInterval> | null>(
+        null,
+    );
+
+    const isVerified = isTelegramWebApp() || !!auth.user || phoneVerified;
+
+    useEffect(() => {
+        return () => {
+            if (cooldownTimerRef.current) {
+                clearInterval(cooldownTimerRef.current);
+            }
+        };
+    }, []);
+
+    const startResendCooldown = () => {
+        setResendCooldown(RESEND_COOLDOWN_SECONDS);
+        if (cooldownTimerRef.current) {
+            clearInterval(cooldownTimerRef.current);
+        }
+        cooldownTimerRef.current = setInterval(() => {
+            setResendCooldown((seconds) => {
+                if (seconds <= 1) {
+                    if (cooldownTimerRef.current) {
+                        clearInterval(cooldownTimerRef.current);
+                    }
+                    return 0;
+                }
+                return seconds - 1;
+            });
+        }, 1000);
+    };
+
+    const sendOtpCode = async () => {
+        setOtpSending(true);
+        try {
+            await axios.post('/auth/phone/otp', { phoneNumber });
+            toast.success('Verification code sent');
+            startResendCooldown();
+        } catch (error: any) {
+            toast.error(
+                error.response?.data?.error || 'Failed to send verification code',
+            );
+        } finally {
+            setOtpSending(false);
+        }
+    };
+
+    const openOtpDialog = async () => {
+        setOtpCode('');
+        setOtpDialogOpen(true);
+        await sendOtpCode();
+    };
+
+    const verifyOtpCode = async () => {
+        setOtpVerifying(true);
+        try {
+            await axios.post('/auth/phone/verify', {
+                phoneNumber,
+                code: otpCode,
+            });
+            toast.success('Phone number verified');
+            setPhoneVerified(true);
+            setOtpDialogOpen(false);
+            await placeOrder();
+        } catch (error: any) {
+            toast.error(
+                error.response?.data?.error || 'Invalid or expired code',
+            );
+        } finally {
+            setOtpVerifying(false);
+        }
+    };
 
     // Format price helper
     const formatPrice = (price: number | null | undefined): string => {
@@ -352,17 +456,7 @@ export default function CheckoutPage({
         }
     };
 
-    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-
-        // Validate delivery fee was calculated
-        if (deliveryFee === 0 && !latitude && !plusCode) {
-            toast.error(
-                'Please use location or Plus Code to calculate delivery fee',
-            );
-            return;
-        }
-
+    const placeOrder = async () => {
         setLoading(true);
 
         try {
@@ -403,6 +497,25 @@ export default function CheckoutPage({
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+
+        // Validate delivery fee was calculated
+        if (deliveryFee === 0 && !latitude && !plusCode) {
+            toast.error(
+                'Please use location or Plus Code to calculate delivery fee',
+            );
+            return;
+        }
+
+        if (!isVerified) {
+            await openOtpDialog();
+            return;
+        }
+
+        await placeOrder();
     };
 
     if (items.length === 0) {
@@ -658,12 +771,66 @@ export default function CheckoutPage({
                                 {loading ? 'Placing Order...' :
                                  processingLink ? 'Processing location...' :
                                  calculatingFee ? 'Calculating fee...' :
+                                 otpSending ? 'Sending code...' :
+                                 !isVerified ? 'Verify Phone & Place Order' :
                                  'Place Order'}
                             </Button>
                         </CardFooter>
                     </Card>
                 </form>
             </div>
+
+            <Dialog open={otpDialogOpen} onOpenChange={setOtpDialogOpen}>
+                <DialogContent className="sm:max-w-sm">
+                    <DialogHeader>
+                        <DialogTitle>Verify your phone number</DialogTitle>
+                        <DialogDescription>
+                            Enter the 6-digit code we sent to {phoneNumber}.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="flex flex-col items-center gap-4 py-2">
+                        <InputOTP
+                            maxLength={6}
+                            value={otpCode}
+                            onChange={setOtpCode}
+                            disabled={otpVerifying || otpSending}
+                        >
+                            <InputOTPGroup>
+                                {Array.from({ length: 6 }).map((_, i) => (
+                                    <InputOTPSlot key={i} index={i} />
+                                ))}
+                            </InputOTPGroup>
+                        </InputOTP>
+
+                        <Button
+                            type="button"
+                            variant="link"
+                            size="sm"
+                            className="h-auto p-0"
+                            disabled={otpSending || resendCooldown > 0}
+                            onClick={sendOtpCode}
+                        >
+                            {resendCooldown > 0
+                                ? `Resend code in ${resendCooldown}s`
+                                : otpSending
+                                  ? 'Sending...'
+                                  : "Didn't get a code? Resend"}
+                        </Button>
+                    </div>
+
+                    <DialogFooter>
+                        <Button
+                            type="button"
+                            className="w-full"
+                            disabled={otpCode.length !== 6 || otpVerifying}
+                            onClick={verifyOtpCode}
+                        >
+                            {otpVerifying ? 'Verifying...' : 'Verify & Place Order'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

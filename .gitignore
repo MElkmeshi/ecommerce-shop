@@ -32,3 +32,5 @@ frankenphp
 frankenphp-worker.php
 
 .env.prod
+
+/deploy.sh
