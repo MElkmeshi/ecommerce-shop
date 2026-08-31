@@ -16,6 +16,7 @@ use App\Http\Controllers\GoogleMapsController;
 use App\Http\Controllers\MoamalatPageController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\PhoneAuthController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\TelegramBotController;
 use App\Http\Controllers\VariantTypeController;
@@ -37,6 +38,14 @@ Route::post('/api/calculate-delivery-fee', [OrderController::class, 'calculateDe
 Route::post('/api/calculate-delivery-fee-pluscode', [OrderController::class, 'calculateDeliveryFeeFromPlusCode'])->name('api.calculate-delivery-fee-pluscode');
 Route::post('/api/cart/validate-stock', [CartController::class, 'validateStock'])->name('api.cart.validate-stock');
 Route::post('/api/resolve-maps-link', [GoogleMapsController::class, 'resolveShortenedLink'])->name('api.resolve-maps-link');
+
+// Phone OTP Authentication (non-Telegram browser customers)
+Route::post('/auth/phone/otp', [PhoneAuthController::class, 'sendCode'])
+    ->middleware('throttle:5,1')
+    ->name('auth.phone.otp');
+Route::post('/auth/phone/verify', [PhoneAuthController::class, 'verify'])
+    ->middleware('throttle:10,1')
+    ->name('auth.phone.verify');
 
 // Telegram Authenticated Routes
 Route::middleware('telegram.auth')->group(function () {

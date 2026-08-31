@@ -42,9 +42,9 @@ class TelegramAuthMiddleware
         $initData = $request->header('x-telegram-init-data');
 
         if (! $initData) {
-            \Log::warning('❌ TelegramAuth: Missing initData header and no session auth');
+            \Log::info('ℹ️ TelegramAuth: No initData header and no session auth, continuing as guest');
 
-            return response()->json(['error' => 'Unauthorized: Missing Telegram initData'], 401);
+            return $next($request);
         }
 
         \Log::info('📥 TelegramAuth: Received initData', [

@@ -25,20 +25,10 @@ class OrderService
      *
      * @throws InsufficientStockException
      */
-    public function createOrder(array $data, array $telegramUser): Order
+    public function createOrder(array $data, User $user): Order
     {
-        return DB::transaction(function () use ($data, $telegramUser) {
-            // Find or create user
-            $user = User::updateOrCreate(
-                ['telegram_id' => $telegramUser['id']],
-                [
-                    'first_name' => $telegramUser['first_name'] ?? null,
-                    'last_name' => $telegramUser['last_name'] ?? null,
-                    'username' => $telegramUser['username'] ?? null,
-                    'language_code' => $telegramUser['language_code'] ?? 'en',
-                    'phone_number' => $data['phoneNumber'],
-                ]
-            );
+        return DB::transaction(function () use ($data, $user) {
+            $user->update(['phone_number' => $data['phoneNumber']]);
 
             // Validate all products and variants exist and have sufficient stock
             $productIds = array_column($data['items'], 'productId');
@@ -164,14 +154,8 @@ class OrderService
     /**
      * Get user's order history.
      */
-    public function getUserOrders(int $telegramId): Collection
+    public function getUserOrders(User $user): Collection
     {
-        $user = User::where('telegram_id', $telegramId)->first();
-
-        if (! $user) {
-            return collect();
-        }
-
         return Order::where('user_id', $user->id)
             ->with(['items.product.category', 'items.productVariant'])
             ->orderBy('created_at', 'desc')

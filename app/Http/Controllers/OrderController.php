@@ -11,6 +11,7 @@ use App\Services\OrderService;
 use App\Settings\AppSettings;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -30,10 +31,16 @@ class OrderController extends Controller
     public function store(CreateOrderRequest $request): JsonResponse
     {
         try {
-            $telegramUser = $request->input('telegram_user');
+            if (! Auth::check()) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Please verify your phone number or open this app from Telegram to place an order',
+                ], 401);
+            }
+
             $orderData = $request->validated();
 
-            $order = $this->orderService->createOrder($orderData, $telegramUser);
+            $order = $this->orderService->createOrder($orderData, Auth::user());
 
             $response = [
                 'success' => true,
@@ -85,10 +92,9 @@ class OrderController extends Controller
     /**
      * Display the user's order history.
      */
-    public function index(Request $request): Response
+    public function index(): Response
     {
-        $telegramUser = $request->input('telegram_user');
-        $orders = $this->orderService->getUserOrders($telegramUser['id']);
+        $orders = Auth::check() ? $this->orderService->getUserOrders(Auth::user()) : collect();
 
         return Inertia::render('OrdersPage', [
             'orders' => $orders->map(function ($order) {

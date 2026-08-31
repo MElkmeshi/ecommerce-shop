@@ -40,6 +40,12 @@ return [
         'bot_username' => env('TELEGRAM_BOT_USERNAME'),
     ],
 
+    'isend' => [
+        'base_url' => env('ISEND_BASE_URL', 'https://isend.com.ly/api/v3/sms/send'),
+        'api_token' => env('ISEND_API_TOKEN'),
+        'sender_id' => env('ISEND_SENDER_ID', 'iSend'),
+    ],
+
     'webhook' => [
         'url' => env('WEBHOOK_URL'),
     ],
